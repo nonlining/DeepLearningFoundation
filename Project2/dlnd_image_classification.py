@@ -6,7 +6,7 @@
 # ## Get the Data
 # Run the following cell to download the [CIFAR-10 dataset for python](https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz).
 
-# In[2]:
+# In[1]:
 
 """
 DON'T MODIFY ANYTHING IN THIS CELL THAT IS BELOW THIS LINE
@@ -60,7 +60,7 @@ tests.test_folder_path(cifar10_dataset_folder_path)
 # 
 # Ask yourself "What are all possible labels?", "What is the range of values for the image data?", "Are the labels in order or random?".  Answers to questions like these will help you preprocess the data and end up with better predictions.
 
-# In[3]:
+# In[2]:
 
 get_ipython().magic('matplotlib inline')
 get_ipython().magic("config InlineBackend.figure_format = 'retina'")
@@ -78,7 +78,7 @@ helper.display_stats(cifar10_dataset_folder_path, batch_id, sample_id)
 # ### Normalize
 # In the cell below, implement the `normalize` function to take in image data, `x`, and return it as a normalized Numpy array. The values should be in the range of 0 to 1, inclusive.  The return object should be the same shape as `x`.
 
-# In[4]:
+# In[3]:
 
 def normalize(x):
     """
@@ -100,7 +100,7 @@ tests.test_normalize(normalize)
 # 
 # Hint: Don't reinvent the wheel.
 
-# In[5]:
+# In[4]:
 
 def one_hot_encode(x):
     """
@@ -125,7 +125,7 @@ tests.test_one_hot_encode(one_hot_encode)
 # ## Preprocess all the data and save it
 # Running the code cell below will preprocess all the CIFAR-10 data and save it to file. The code below also uses 10% of the training data for validation.
 
-# In[6]:
+# In[5]:
 
 """
 DON'T MODIFY ANYTHING IN THIS CELL
@@ -137,7 +137,7 @@ helper.preprocess_and_save_data(cifar10_dataset_folder_path, normalize, one_hot_
 # # Check Point
 # This is your first checkpoint.  If you ever decide to come back to this notebook or have to restart the notebook, you can start from here.  The preprocessed data has been saved to disk.
 
-# In[7]:
+# In[6]:
 
 """
 DON'T MODIFY ANYTHING IN THIS CELL
@@ -177,7 +177,7 @@ valid_features, valid_labels = pickle.load(open('preprocess_validation.p', mode=
 # 
 # Note: `None` for shapes in TensorFlow allow for a dynamic size.
 
-# In[8]:
+# In[7]:
 
 import tensorflow as tf
 
@@ -246,9 +246,9 @@ def conv2d_maxpool(x_tensor, conv_num_outputs, conv_ksize, conv_strides, pool_ks
     'wc': tf.Variable(tf.random_normal([conv_ksize[0], 
                                         conv_ksize[1], 
                                         x_tensor.get_shape().as_list()[3], 
-                                        conv_num_outputs]))}
+                                        conv_num_outputs], stddev=0.1))}
     biases = {
-    'bc': tf.Variable(tf.random_normal([conv_num_outputs]))}
+    'bc': tf.Variable(tf.random_normal([conv_num_outputs], stddev=0.1))}
     
     conv = tf.nn.conv2d(x_tensor, weights['wc'], strides=[1, conv_strides[0], conv_strides[1], 1], padding='SAME')
     conv = tf.nn.bias_add(conv, biases['bc'])
@@ -303,10 +303,10 @@ def fully_conn(x_tensor, num_outputs):
     : return: A 2-D tensor where the second dimension is num_outputs.
     """
     weights = {
-    'wfc': tf.Variable(tf.random_normal([x_tensor.get_shape().as_list()[1], num_outputs]))}
+    'wfc': tf.Variable(tf.random_normal([x_tensor.get_shape().as_list()[1], num_outputs],stddev=0.1))}
     
     biases = {
-    'bfc': tf.Variable(tf.random_normal([num_outputs]))}
+    'bfc': tf.Variable(tf.random_normal([num_outputs],stddev=0.1))}
     
     fc = tf.add(tf.matmul(x_tensor, weights['wfc']), biases['bfc'])
     fc = tf.nn.relu(fc)
@@ -335,10 +335,10 @@ def output(x_tensor, num_outputs):
     : return: A 2-D tensor where the second dimension is num_outputs.
     """
     weights = {
-    'wo': tf.Variable(tf.random_normal([x_tensor.get_shape().as_list()[1], num_outputs]))}
+    'wo': tf.Variable(tf.random_normal([x_tensor.get_shape().as_list()[1], num_outputs],stddev=0.1))}
     
     biases = {
-    'bo': tf.Variable(tf.random_normal([num_outputs]))}
+    'bo': tf.Variable(tf.random_normal([num_outputs],stddev=0.1))}
     
     out = tf.add(tf.matmul(x_tensor, weights['wo']), biases['bo'])
     return out
@@ -360,7 +360,7 @@ tests.test_output(output)
 # * Return the output
 # * Apply [TensorFlow's Dropout](https://www.tensorflow.org/api_docs/python/tf/nn/dropout) to one or more layers in the model using `keep_prob`. 
 
-# In[14]:
+# In[21]:
 
 def conv_net(x, keep_prob):
     """
@@ -381,9 +381,9 @@ def conv_net(x, keep_prob):
     # TODO: Apply 1, 2, or 3 Fully Connected Layers
     #    Play around with different number of outputs
     # Function Definition from Above:
-    conv = fully_conn(conv, 512)
-    conv = fully_conn(conv, 256)
-    
+    conv = fully_conn(conv, 384)
+    conv = fully_conn(conv, 192)
+    conv = tf.nn.dropout(conv, keep_prob = keep_prob)
     # TODO: Apply an Output Layer
     #    Set this to the number of classes
     # Function Definition from Above:
@@ -437,7 +437,7 @@ tests.test_conv_net(conv_net)
 # 
 # Note: Nothing needs to be returned. This function is only optimizing the neural network.
 
-# In[15]:
+# In[22]:
 
 def train_neural_network(session, optimizer, keep_probability, feature_batch, label_batch):
     """
@@ -462,7 +462,7 @@ tests.test_train_nn(train_neural_network)
 # ### Show Stats
 # Implement the function `print_stats` to print loss and validation accuracy.  Use the global variables `valid_features` and `valid_labels` to calculate validation accuracy.  Use a keep probability of `1.0` to calculate the loss and validation accuracy.
 
-# In[16]:
+# In[23]:
 
 def print_stats(session, feature_batch, label_batch, cost, accuracy):
     """
@@ -495,10 +495,10 @@ def print_stats(session, feature_batch, label_batch, cost, accuracy):
 #  * ...
 # * Set `keep_probability` to the probability of keeping a node using dropout
 
-# In[21]:
+# In[24]:
 
 # TODO: Tune Parameters
-epochs = 2000
+epochs = 1400
 batch_size = 256
 keep_probability = 0.75
 
@@ -506,7 +506,7 @@ keep_probability = 0.75
 # ### Train on a Single CIFAR-10 Batch
 # Instead of training the neural network on all the CIFAR-10 batches of data, let's use a single batch. This should save time while you iterate on the model to get a better accuracy.  Once the final validation accuracy is 50% or greater, run the model on all the data in the next section.
 
-# In[22]:
+# In[25]:
 
 """
 DON'T MODIFY ANYTHING IN THIS CELL
@@ -528,7 +528,7 @@ with tf.Session() as sess:
 # ### Fully Train the Model
 # Now that you got a good accuracy with a single CIFAR-10 batch, try it with all five batches.
 
-# In[23]:
+# In[26]:
 
 """
 DON'T MODIFY ANYTHING IN THIS CELL
@@ -560,7 +560,7 @@ with tf.Session() as sess:
 # ## Test Model
 # Test your model against the test dataset.  This will be your final accuracy. You should have an accuracy greater than 50%. If you don't, keep tweaking the model architecture and parameters.
 
-# In[24]:
+# In[27]:
 
 """
 DON'T MODIFY ANYTHING IN THIS CELL
