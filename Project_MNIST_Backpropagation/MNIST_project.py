@@ -1,17 +1,29 @@
-import numpy as np
-from sklearn.datasets import load_boston
+#-------------------------------------------------------------------------------
+# Name:        Digits
+# Purpose:
+#
+# Author:      jwang32
+#
+# Created:     07/07/2017
+# Copyright:   (c) jwang32 2017
+# Licence:     <your licence>
+#-------------------------------------------------------------------------------
+from sklearn.datasets import load_digits
+import matplotlib.pyplot as plt
 from sklearn.utils import shuffle, resample
+import numpy as np
 from miniflow import *
 
+epochs = 10
 
 def main():
-    data = load_boston()
+    data = load_digits()
     X_ = data['data']
     y_ = data['target']
 
     X_ = (X_ - np.mean(X_, axis=0)) / np.std(X_, axis=0)
     n_features = X_.shape[1]
-    print n_features
+
     n_hidden = 10
 
     W1_ = np.random.randn(n_features, n_hidden)
@@ -37,7 +49,7 @@ def main():
         b2: b2_
     }
 
-    epochs = 1000
+
     m = X_.shape[0]
     batch_size = 11
     steps_per_epoch = m // batch_size
@@ -67,8 +79,6 @@ def main():
             loss += graph[-1].value
 
         print("Epoch: {}, Loss: {:.3f}".format(i+1, loss/steps_per_epoch))
-
-
 
 if __name__ == '__main__':
     main()
