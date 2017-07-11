@@ -11,7 +11,6 @@ def main():
 
     X_ = (X_ - np.mean(X_, axis=0)) / np.std(X_, axis=0)
     n_features = X_.shape[1]
-    print n_features
     n_hidden = 10
 
     W1_ = np.random.randn(n_features, n_hidden)
@@ -22,7 +21,7 @@ def main():
     X, y = Input(), Input()
     W1, b1 = Input(), Input()
     W2, b2 = Input(), Input()
-
+    print "Linear"
     l1 = Linear(X, W1, b1)
     s1 = Sigmoid(l1)
     l2 = Linear(s1, W2, b2)
@@ -37,7 +36,7 @@ def main():
         b2: b2_
     }
 
-    epochs = 1000
+    epochs = 10
     m = X_.shape[0]
     batch_size = 11
     steps_per_epoch = m // batch_size

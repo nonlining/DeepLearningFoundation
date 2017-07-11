@@ -14,17 +14,18 @@ from sklearn.utils import shuffle, resample
 import numpy as np
 from miniflow import *
 
-epochs = 10
+epochs = 1000
 
 def main():
     data = load_digits()
     X_ = data['data']
     y_ = data['target']
 
-    X_ = (X_ - np.mean(X_, axis=0)) / np.std(X_, axis=0)
+    #X_ = (X_ - np.mean(X_, axis=0)) / np.std(X_, axis=0)
     n_features = X_.shape[1]
+    print n_features
 
-    n_hidden = 10
+    n_hidden = 8
 
     W1_ = np.random.randn(n_features, n_hidden)
     b1_ = np.zeros(n_hidden)
