@@ -21,9 +21,7 @@ def main():
     X_ = data['data']
     y_ = data['target']
 
-    #X_ = (X_ - np.mean(X_, axis=0)) / np.std(X_, axis=0)
     n_features = X_.shape[1]
-    print n_features
 
     n_hidden = 8
 
@@ -38,6 +36,7 @@ def main():
 
     l1 = Linear(X, W1, b1)
     s1 = Sigmoid(l1)
+    print s1
     l2 = Linear(s1, W2, b2)
     cost = MSE(y, l2)
 
@@ -63,18 +62,15 @@ def main():
     for i in range(epochs):
         loss = 0
         for j in range(steps_per_epoch):
-            # Step 1
-            # Randomly sample a batch of examples
+
             X_batch, y_batch = resample(X_, y_, n_samples=batch_size)
 
-            # Reset value of X and y Inputs
             X.value = X_batch
             y.value = y_batch
 
-            # Step 2
+
             forward_and_backward(graph)
 
-            # Step 3
             sgd_update(trainables)
 
             loss += graph[-1].value

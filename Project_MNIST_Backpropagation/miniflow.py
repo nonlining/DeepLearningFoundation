@@ -71,6 +71,7 @@ class Sigmoid(Node):
 
 
 class MSE(Node):
+
     def __init__(self, y, a):
         Node.__init__(self, [y, a])
 
@@ -87,14 +88,13 @@ class MSE(Node):
         self.gradients[self.inbound_nodes[1]] = (-2 / self.m) * self.diff
 
 
+def cross_entropy():
+    pass
+
+def soft_max():
+    pass
+
 def topological_sort(feed_dict):
-    """
-    Sort the nodes in topological order using Kahn's Algorithm.
-
-    `feed_dict`: A dictionary where the key is a `Input` Node and the value is the respective value feed to that Node.
-
-    Returns a list of sorted nodes.
-    """
 
     input_nodes = [n for n in feed_dict.keys()]
 
@@ -123,21 +123,13 @@ def topological_sort(feed_dict):
         for m in n.outbound_nodes:
             G[n]['out'].remove(m)
             G[m]['in'].remove(n)
-            # if no other incoming edges add to S
             if len(G[m]['in']) == 0:
                 S.add(m)
     return L
 
 
 def forward_and_backward(graph):
-    """
-    Performs a forward pass and a backward pass through a list of sorted Nodes.
 
-    Arguments:
-
-        `graph`: The result of calling `topological_sort`.
-    """
-    # Forward pass
     for n in graph:
         n.forward()
 
@@ -148,17 +140,7 @@ def forward_and_backward(graph):
 
 
 def sgd_update(trainables, learning_rate=1e-2):
-    """
-    Updates the value of each trainable with SGD.
 
-    Arguments:
-
-        `trainables`: A list of `Input` Nodes representing weights/biases.
-        `learning_rate`: The learning rate.
-    """
-    # Performs SGD
-    #
-    # Loop over the trainables
     for t in trainables:
         # Change the trainable's value by subtracting the learning rate
         # multiplied by the partial of the cost with respect to this
