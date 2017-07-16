@@ -147,3 +147,16 @@ def sgd_update(trainables, learning_rate=1e-2):
         # trainable.
         partial = t.gradients[t]
         t.value -= learning_rate * partial
+
+import numpy as np
+
+# not finish
+def conv(arr, shape, kernel_size, kernel):
+
+    for j in range(shape[0] - 2):
+        for i in range(shape[1] - 2):
+            print arr[i + j*shape[1]               :i + j*shape[1] + kernel_size[0]            ]
+            print arr[i + j*shape[1] + shape[1]*1  :i + j*shape[1] + kernel_size[0]+ shape[1]*1]
+            print arr[i + j*shape[1] + shape[1]*2  :i + j*shape[1] + kernel_size[0]+ shape[1]*2]
+
+        print
