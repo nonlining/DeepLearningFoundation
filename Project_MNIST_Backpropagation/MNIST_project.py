@@ -26,11 +26,16 @@ def main():
     n_hidden = 8
     kernel_size = (3,3)
 
-    W1_ = np.random.randn(kernel_size[0]*kernel_size[1], n_hidden)
+    W_layer1 = np.random.randn(n_hidden, kernel_size[0]*kernel_size[1])
+    b_layer1 = np.zeros(n_hidden)
+    # test
+    print W_layer1[0]
+    print X_[0]
+    print conv(X_[0], (8,8) ,W_layer1[0], kernel_size) + b_layer1[0]
 
-    b1_ = np.zeros(n_hidden)
-    W2_ = np.random.randn(n_hidden, 1)
-    b2_ = np.zeros(1)
+
+    W_layer2 = np.random.randn(n_hidden, 1)
+    b_layer2 = np.zeros(1)
 
     X, y = Input(), Input()
     W1, b1 = Input(), Input()
