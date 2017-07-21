@@ -50,6 +50,33 @@ class Linear(Node):
             self.gradients[self.inbound_nodes[2]] += np.sum(grad_cost, axis=0, keepdims=False)
 
 
+def conv(arr, shape, kernel, kernel_size):
+    c = np.zeros((shape[0] - 2)*(shape[0] - 2))
+
+    count = 0
+    for j in range(shape[0] - 2):
+        for i in range(shape[1] - 2):
+            res = 0
+            res += kernel[0:3]*arr[i + j*shape[1]               :i + j*shape[1] + kernel_size[0]            ]
+            res += kernel[3:6]*arr[i + j*shape[1] + shape[1]*1  :i + j*shape[1] + kernel_size[0]+ shape[1]*1]
+            res += kernel[6:]*arr[i + j*shape[1] + shape[1]*2  :i + j*shape[1] + kernel_size[0]+ shape[1]*2]
+            c[count] = np.sum(res)
+            count += 1
+
+    return c
+
+class Conv(Node):
+    def __init__(self, X, W, b):
+        Node.__init__(self, [X, W, b])
+
+    def forward(self):
+        X = self.inbound_nodes[0].value
+        W = self.inbound_nodes[1].value
+        b = self.inbound_nodes[2].value
+
+        self.value = conv(X, X.shape ,W , W.shape) + b
+
+
 class Sigmoid(Node):
 
     def __init__(self, node):
@@ -86,6 +113,9 @@ class MSE(Node):
     def backward(self):
         self.gradients[self.inbound_nodes[0]] = (2 / self.m) * self.diff
         self.gradients[self.inbound_nodes[1]] = (-2 / self.m) * self.diff
+
+
+
 
 
 def cross_entropy():
@@ -148,17 +178,3 @@ def sgd_update(trainables, learning_rate=1e-2):
         partial = t.gradients[t]
         t.value -= learning_rate * partial
 
-def conv(arr, shape, kernel, kernel_size):
-    c = np.zeros((shape[0] - 2)*(shape[0] - 2))
-
-    count = 0
-    for j in range(shape[0] - 2):
-        for i in range(shape[1] - 2):
-            res = 0
-            res += kernel[0:3]*arr[i + j*shape[1]               :i + j*shape[1] + kernel_size[0]            ]
-            res += kernel[3:6]*arr[i + j*shape[1] + shape[1]*1  :i + j*shape[1] + kernel_size[0]+ shape[1]*1]
-            res += kernel[6:]*arr[i + j*shape[1] + shape[1]*2  :i + j*shape[1] + kernel_size[0]+ shape[1]*2]
-            c[count] = np.sum(res)
-            count += 1
-
-    return c
