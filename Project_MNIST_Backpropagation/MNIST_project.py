@@ -16,6 +16,7 @@ from miniflow import *
 
 epochs = 10
 
+
 def main():
     data = load_digits()
     X_ = data['data']
@@ -33,9 +34,9 @@ def main():
     b_layer2 = np.zeros(1)
 
     # test
-    #print W_layer1[0]
-    #print X_[0]
-    #print conv(X_[0], (8,8) ,W_layer1[0], kernel_size) + b_layer1[0]
+
+    print conv(X_[0], (8,8) ,W_layer1, kernel_size) + b_layer1[0]
+
 
 
     X, y = Input(), Input()

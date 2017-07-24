@@ -53,19 +53,22 @@ class Linear(Node):
             self.gradients[self.inbound_nodes[2]] += np.sum(grad_cost, axis=0, keepdims=False)
 
 
-def conv(arr, shape, kernel, kernel_size):
-    c = np.zeros((shape[0] - 2)*(shape[0] - 2))
+def conv(arr, shape, kernels, kernel_size):
 
-    count = 0
-    for j in range(shape[0] - 2):
-        for i in range(shape[1] - 2):
-            res = 0
-            print kernel[0:3]
-            res += kernel[0:3]*arr[i + j*shape[1]               :i + j*shape[1] + kernel_size[0]            ]
-            res += kernel[3:6]*arr[i + j*shape[1] + shape[1]*1  :i + j*shape[1] + kernel_size[0]+ shape[1]*1]
-            res += kernel[6:]*arr[i + j*shape[1] + shape[1]*2  :i + j*shape[1] + kernel_size[0]+ shape[1]*2]
-            c[count] = np.sum(res)
-            count += 1
+    c = np.zeros( (8 ,(shape[0] - 2)*(shape[0] - 2)))
+
+    l = 0
+    for kernel in kernels:
+        count = 0
+        for j in range(shape[0] - 2):
+            for i in range(shape[1] - 2):
+                res = 0
+                res += kernel[0:3]*arr[i + j*shape[1]               :i + j*shape[1] + kernel_size[0]            ]
+                res += kernel[3:6]*arr[i + j*shape[1] + shape[1]*1  :i + j*shape[1] + kernel_size[0]+ shape[1]*1]
+                res += kernel[6:]*arr[i + j*shape[1] + shape[1]*2  :i + j*shape[1] + kernel_size[0]+ shape[1]*2]
+                c[l][count] = np.sum(res)
+                count += 1
+        l += 1
 
     return c
 
