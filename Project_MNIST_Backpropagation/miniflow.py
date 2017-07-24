@@ -39,7 +39,10 @@ class Linear(Node):
         X = self.inbound_nodes[0].value
         W = self.inbound_nodes[1].value
         b = self.inbound_nodes[2].value
+        print X.shape
+        print W.shape
         self.value = np.dot(X, W) + b
+        print self.value
 
     def backward(self):
         self.gradients = {n: np.zeros_like(n.value) for n in self.inbound_nodes}
@@ -74,8 +77,13 @@ class Conv(Node):
         X = self.inbound_nodes[0].value
         W = self.inbound_nodes[1].value
         b = self.inbound_nodes[2].value
+        print X.shape
+        print W.shape
+        print b.shape
 
-        self.value = conv(X, X.shape ,W , W.shape) + b
+        #self.value = conv(X, X.shape ,W , W.shape) + b
+    def backward(self):
+        pass
 
 
 class Sigmoid(Node):
@@ -131,6 +139,7 @@ def topological_sort(feed_dict):
 
     G = {}
     nodes = [n for n in input_nodes]
+
     while len(nodes) > 0:
         n = nodes.pop(0)
         if n not in G:
@@ -142,11 +151,15 @@ def topological_sort(feed_dict):
             G[m]['in'].add(n)
             nodes.append(m)
 
+    for i in G:
+        print type(i),i,G[i]
+
+
     L = []
     S = set(input_nodes)
     while len(S) > 0:
         n = S.pop()
-
+        # feed data to input
         if isinstance(n, Input):
             n.value = feed_dict[n]
 
@@ -164,18 +177,19 @@ def forward_and_backward(graph):
     for n in graph:
         n.forward()
 
-    # Backward pass
-    # see: https://docs.python.org/2.3/whatsnew/section-slices.html
     for n in graph[::-1]:
         n.backward()
+
+
+def forward(graph):
+    for n in graph:
+        n.forward()
 
 
 def sgd_update(trainables, learning_rate=1e-2):
 
     for t in trainables:
-        # Change the trainable's value by subtracting the learning rate
-        # multiplied by the partial of the cost with respect to this
-        # trainable.
+
         partial = t.gradients[t]
         t.value -= learning_rate * partial
 

@@ -35,7 +35,7 @@ def main():
     # test
     #print W_layer1[0]
     #print X_[0]
-    print conv(X_[0], (8,8) ,W_layer1[0], kernel_size) + b_layer1[0]
+    #print conv(X_[0], (8,8) ,W_layer1[0], kernel_size) + b_layer1[0]
 
 
     X, y = Input(), Input()
@@ -44,7 +44,6 @@ def main():
 
     conv_layer1 = Conv(X, W1, b1)
 
-    print conv_layer1
 
     feed_dict = {
         X: X_,
@@ -56,8 +55,9 @@ def main():
     }
 
     graph = topological_sort(feed_dict)
+
     trainables = [W1, b1, W2, b2]
-    forward_and_backward(graph)
+    forward(graph)
 
 
 

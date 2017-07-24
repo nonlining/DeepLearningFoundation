@@ -36,7 +36,7 @@ def main():
         b2: b2_
     }
 
-    epochs = 10
+    epochs = 1
     m = X_.shape[0]
     batch_size = 11
     steps_per_epoch = m // batch_size
