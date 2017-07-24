@@ -57,6 +57,7 @@ def conv(arr, shape, kernel, kernel_size):
     for j in range(shape[0] - 2):
         for i in range(shape[1] - 2):
             res = 0
+            print kernel[0:3]
             res += kernel[0:3]*arr[i + j*shape[1]               :i + j*shape[1] + kernel_size[0]            ]
             res += kernel[3:6]*arr[i + j*shape[1] + shape[1]*1  :i + j*shape[1] + kernel_size[0]+ shape[1]*1]
             res += kernel[6:]*arr[i + j*shape[1] + shape[1]*2  :i + j*shape[1] + kernel_size[0]+ shape[1]*2]
