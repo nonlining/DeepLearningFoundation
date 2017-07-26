@@ -34,8 +34,8 @@ def main():
     b_layer2 = np.zeros(1)
 
     # test
-
-    print conv(X_[0], (8,8) ,W_layer1, kernel_size) + b_layer1[0]
+    print X_[0].shape, W_layer1.shape
+    #print conv(X_[0], (8,8) ,W_layer1, kernel_size) + b_layer1[0]
 
 
 
@@ -43,7 +43,7 @@ def main():
     W1, b1 = Input(), Input()
     W2, b2 = Input(), Input()
 
-    conv_layer1 = Conv(X, W1, b1)
+    conv_layer1 = Conv(X, W1, b1, (8,8), kernel_size)
 
 
     feed_dict = {

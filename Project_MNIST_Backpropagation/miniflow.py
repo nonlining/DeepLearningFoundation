@@ -73,18 +73,24 @@ def conv(arr, shape, kernels, kernel_size):
     return c
 
 class Conv(Node):
-    def __init__(self, X, W, b):
+    def __init__(self, X, W, b, input_shape, kernel_size):
         Node.__init__(self, [X, W, b])
+        self.input_shape = input_shape
+        self.kernel_size = kernel_size
 
     def forward(self):
         X = self.inbound_nodes[0].value
         W = self.inbound_nodes[1].value
         b = self.inbound_nodes[2].value
-        print X.shape
-        print W.shape
-        print b.shape
+        self.value = None
+        for x in X:
+            a = conv(X[0], self.input_shape ,W , self.kernel_size)
 
-        #self.value = conv(X, X.shape ,W , W.shape) + b
+            if self.value is None:
+                self.value = a
+            else:
+                self.value = np.dstack( (self.value ,a))
+
     def backward(self):
         pass
 
@@ -153,10 +159,6 @@ def topological_sort(feed_dict):
             G[n]['out'].add(m)
             G[m]['in'].add(n)
             nodes.append(m)
-
-    for i in G:
-        print type(i),i,G[i]
-
 
     L = []
     S = set(input_nodes)
