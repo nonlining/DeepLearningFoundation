@@ -39,10 +39,9 @@ class Linear(Node):
         X = self.inbound_nodes[0].value
         W = self.inbound_nodes[1].value
         b = self.inbound_nodes[2].value
-        print X.shape
-        print W.shape
+
         self.value = np.dot(X, W) + b
-        print self.value
+
 
     def backward(self):
         self.gradients = {n: np.zeros_like(n.value) for n in self.inbound_nodes}
@@ -63,10 +62,10 @@ def conv(arr, shape, kernels, kernel_size):
         for j in range(shape[0] - 2):
             for i in range(shape[1] - 2):
                 res = 0
-                res += kernel[0:3]*arr[i + j*shape[1]               :i + j*shape[1] + kernel_size[0]            ]
-                res += kernel[3:6]*arr[i + j*shape[1] + shape[1]*1  :i + j*shape[1] + kernel_size[0]+ shape[1]*1]
-                res += kernel[6:]*arr[i + j*shape[1] + shape[1]*2  :i + j*shape[1] + kernel_size[0]+ shape[1]*2]
-                c[l][count] = np.sum(res)
+                res += np.dot(kernel[0:3], arr[i + j*shape[1]               :i + j*shape[1] + kernel_size[0]            ])
+                res += np.dot(kernel[3:6], arr[i + j*shape[1] + shape[1]*1  :i + j*shape[1] + kernel_size[0]+ shape[1]*1])
+                res += np.dot(kernel[6:], arr[i + j*shape[1] + shape[1]*2  :i + j*shape[1] + kernel_size[0]+ shape[1]*2])
+                c[l][count] = res
                 count += 1
         l += 1
 
@@ -198,3 +197,5 @@ def sgd_update(trainables, learning_rate=1e-2):
         partial = t.gradients[t]
         t.value -= learning_rate * partial
 
+def normalized(x):
+    return (x - 0)/255.0
