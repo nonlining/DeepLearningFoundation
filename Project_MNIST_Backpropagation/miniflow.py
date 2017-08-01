@@ -1,4 +1,5 @@
 import numpy as np
+import math
 
 class Node:
 
@@ -52,30 +53,32 @@ class Linear(Node):
             self.gradients[self.inbound_nodes[2]] += np.sum(grad_cost, axis=0, keepdims=False)
 
 
-def conv(arr, shape, kernels, kernel_size):
+def conv(arr, shape, kernels, kernel_size, strides, b):
+    out_height = math.ceil((shape[0] - kernel_size[0] + 1)/float(strides[0]))
+    out_width  = math.ceil((shape[1] - kernel_size[1] + 1)/float(strides[1]))
 
-    c = np.zeros( (8 ,(shape[0] - 2)*(shape[0] - 2)))
+    c = np.zeros( (kernels.shape[0] ,int(out_height)*int(out_width)) )
 
     l = 0
     for kernel in kernels:
         count = 0
-        for j in range(shape[0] - 2):
-            for i in range(shape[1] - 2):
+        for j in range(int(out_height)):
+            for i in range(int(out_width)):
                 res = 0
-                res += np.dot(kernel[0:3], arr[i + j*shape[1]               :i + j*shape[1] + kernel_size[0]            ])
-                res += np.dot(kernel[3:6], arr[i + j*shape[1] + shape[1]*1  :i + j*shape[1] + kernel_size[0]+ shape[1]*1])
-                res += np.dot(kernel[6:], arr[i + j*shape[1] + shape[1]*2  :i + j*shape[1] + kernel_size[0]+ shape[1]*2])
-                c[l][count] = res
+                for k in range(0, kernel_size[1], strides[1]):
+                    res += np.dot(kernel[k*kernel_size[0]:(k+1)*kernel_size[0]], arr[i + j*shape[1] + shape[1]*k  :i + j*shape[1] + kernel_size[0] + shape[1]*k])
+                c[l][count] = res + b[l]
                 count += 1
         l += 1
 
     return c
 
 class Conv(Node):
-    def __init__(self, X, W, b, input_shape, kernel_size):
+    def __init__(self, X, W, b, input_shape, kernel_size, strides):
         Node.__init__(self, [X, W, b])
         self.input_shape = input_shape
         self.kernel_size = kernel_size
+        self.strides = strides
 
     def forward(self):
         X = self.inbound_nodes[0].value
@@ -83,7 +86,7 @@ class Conv(Node):
         b = self.inbound_nodes[2].value
         self.value = None
         for x in X:
-            a = conv(X[0], self.input_shape ,W , self.kernel_size)
+            a = conv(X[0], self.input_shape, W, self.kernel_size, self.strides, b)
 
             if self.value is None:
                 self.value = a
@@ -91,7 +94,7 @@ class Conv(Node):
                 self.value = np.dstack( (self.value ,a))
 
     def backward(self):
-        pass
+        pass # TODO
 
 
 class Sigmoid(Node):
@@ -112,6 +115,21 @@ class Sigmoid(Node):
             grad_cost = n.gradients[self]
             sigmoid = self.value
             self.gradients[self.inbound_nodes[0]] += sigmoid * (1 - sigmoid) * grad_cost
+
+
+class Relu(Node):
+    def __init__(self, node):
+        Node.__init__(self, [node])
+
+    def _relu(self, x):
+        return np.maximum(0, x)
+
+    def forward(self):
+        input_value = self.inbound_nodes[0].value
+        self.value = self._relu(input_value)
+
+    def backward(self):
+        pass # TODO
 
 
 class MSE(Node):
@@ -197,5 +215,5 @@ def sgd_update(trainables, learning_rate=1e-2):
         partial = t.gradients[t]
         t.value -= learning_rate * partial
 
-def normalized(x):
-    return (x - 0)/255.0
+def normalized(x, max_value, min_value):
+    return (x - min_value)/float(max_value - min_value)

@@ -20,7 +20,12 @@ np.random.seed(1)
 
 def main():
     data = load_digits()
-    X_ = normalized(data['data'])
+
+    max_value = np.amax(data['data'])
+    min_value = np.amin(data['data'])
+    X_ = normalized(data['data'], max_value, min_value)
+
+
     y_ = data['target']
 
 
@@ -37,13 +42,14 @@ def main():
 
     # test
     #print X_[0].shape, W_layer1.shape
-    #print conv(X_[0], (8,8) ,W_layer1, kernel_size) + b_layer1[0]
+    #print conv(X_[0], (8,8) ,W_layer1, kernel_size, (1,1)) + b_layer1[0]
 
     X, y = Input(), Input()
     W1, b1 = Input(), Input()
     W2, b2 = Input(), Input()
 
-    conv_layer1 = Conv(X, W1, b1, (8,8), kernel_size)
+    conv_layer1 = Conv(X, W1, b1, (8,8), kernel_size, (1,1))
+    activation_1 = Relu(conv_layer1)
 
 
     feed_dict = {
@@ -60,6 +66,8 @@ def main():
     trainables = [W1, b1, W2, b2]
     forward(graph)
 
+    print graph[6].value
+    print graph[6].value.shape
 
 if __name__ == '__main__':
     main()
