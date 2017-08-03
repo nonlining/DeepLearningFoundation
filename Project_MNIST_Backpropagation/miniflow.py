@@ -150,7 +150,13 @@ class MSE(Node):
         self.gradients[self.inbound_nodes[1]] = (-2 / self.m) * self.diff
 
 
-
+class soft_max(Node):
+    def __init__(self, y, a):
+        Node.__init__(self, [y, a])
+    def forward(self):
+        pass
+    def backward(self):
+        pass
 
 
 def cross_entropy():
