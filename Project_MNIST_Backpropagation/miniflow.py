@@ -162,8 +162,8 @@ class soft_max(Node):
 def cross_entropy():
     pass
 
-def soft_max(list):
-    return 1./(sum(list))
+
+
 
 def topological_sort(feed_dict):
 
