@@ -162,7 +162,6 @@ class soft_max(Node):
             tmp = np.sum(x, axis = 1)
             x /= tmp.reshape((x.shape[0], 1))
         else:
-            # x = np.exp(x) / np.sum(np.exp(x))
 
             tmp = np.max(x)
             x -= tmp
@@ -175,13 +174,24 @@ class soft_max(Node):
         input_value = self.inbound_nodes[0].value
 
     def backward(self):
+        pass #todo
+
+
+class fully_connected(Node):
+    def __init__(self, node):
+        Node.__init__(self, [Node])
+    def forward(self):
+        pass
+    def backword(self):
         pass
 
-
-def cross_entropy():
-    pass
-
-
+class cross_entropy(Node):
+    def __init__(self, y, a):
+        Node.__init__(self, [y, a])
+    def forward(self):
+        pass
+    def backward(self):
+        pass
 
 
 def topological_sort(feed_dict):
