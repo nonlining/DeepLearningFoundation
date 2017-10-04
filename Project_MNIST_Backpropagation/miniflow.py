@@ -129,7 +129,7 @@ class Relu(Node):
         self.value = self._relu(input_value)
 
     def backward(self):
-        pass # TODO
+        self.gradients = {n: np.zeros_like(n.value) for n in self.inbound_nodes}
 
 
 class MSE(Node):
