@@ -1,6 +1,8 @@
 import numpy as np
 from sklearn.datasets import load_boston
 from sklearn.utils import shuffle, resample
+import matplotlib.pyplot as plt
+
 from miniflow import *
 
 
@@ -10,18 +12,23 @@ def main():
     y_ = data['target']
 
     X_ = (X_ - np.mean(X_, axis=0)) / np.std(X_, axis=0)
+
     n_features = X_.shape[1]
-    n_hidden = 10
+    print "nunber of features", n_features
+
+    n_hidden = 15
 
     W1_ = np.random.randn(n_features, n_hidden)
-    b1_ = np.zeros(n_hidden)
+    b1_ = np.random.randn(n_hidden)
+    #b1_ = np.zeros(n_hidden)
     W2_ = np.random.randn(n_hidden, 1)
-    b2_ = np.zeros(1)
+    b2_ = np.random.randn(1)
+    #b2_ = np.zeros(1)
 
     X, y = Input(), Input()
     W1, b1 = Input(), Input()
     W2, b2 = Input(), Input()
-    print "Linear"
+
     l1 = Linear(X, W1, b1)
     s1 = Sigmoid(l1)
     l2 = Linear(s1, W2, b2)
@@ -36,7 +43,7 @@ def main():
         b2: b2_
     }
 
-    epochs = 1
+    epochs = 1000
     m = X_.shape[0]
     batch_size = 11
     steps_per_epoch = m // batch_size
@@ -45,6 +52,7 @@ def main():
     trainables = [W1, b1, W2, b2]
 
     print("Total number of examples = {}".format(m))
+    loss_list = []
 
     for i in range(epochs):
         loss = 0
@@ -66,7 +74,11 @@ def main():
             loss += graph[-1].value
 
         print("Epoch: {}, Loss: {:.3f}".format(i+1, loss/steps_per_epoch))
+        loss_list.append(loss/steps_per_epoch)
 
+    plt.figure()
+    plt.plot(loss_list)
+    plt.show()
 
 
 if __name__ == '__main__':
