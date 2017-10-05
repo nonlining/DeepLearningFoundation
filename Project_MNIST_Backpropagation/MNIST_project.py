@@ -54,6 +54,7 @@ def main():
     W2, b2 = Input(), Input()
 
     conv_layer1 = Conv(X, W1, b1, (8,8), kernel_size, (1,1))
+
     activation_1 = Relu(conv_layer1)
 
     output = soft_max(activation_1)
@@ -75,7 +76,7 @@ def main():
     trainables = [W1, b1, W2, b2]
     forward(graph)
 
-    #print graph[6].value
+    print graph[6].value
     #print graph
 
 if __name__ == '__main__':

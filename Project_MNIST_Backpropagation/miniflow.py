@@ -94,7 +94,8 @@ class Conv(Node):
                 self.value = np.dstack( (self.value ,a))
 
     def backward(self):
-        pass # TODO
+        self.gradients = {n: np.zeros_like(n.value) for n in self.inbound_nodes}
+        #TODO
 
 
 class Sigmoid(Node):
@@ -130,7 +131,13 @@ class Relu(Node):
 
     def backward(self):
         self.gradients = {n: np.zeros_like(n.value) for n in self.inbound_nodes}
-
+        for n in self.outbound_nodes:
+            grad_cost = n.gradients[self]
+            relu = self.value
+            if relu >= 0:
+                self.gradients[self.inbound_nodes[0]] += 1
+            else:
+                self.gradients[self.inbound_nodes[0]] += 0
 
 class MSE(Node):
 
@@ -172,6 +179,7 @@ class soft_max(Node):
 
     def forward(self):
         input_value = self.inbound_nodes[0].value
+        #TODO
 
     def backward(self):
         pass #todo
