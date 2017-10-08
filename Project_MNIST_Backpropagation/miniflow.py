@@ -169,7 +169,6 @@ class soft_max(Node):
             tmp = np.sum(x, axis = 1)
             x /= tmp.reshape((x.shape[0], 1))
         else:
-
             tmp = np.max(x)
             x -= tmp
             x = np.exp(x)
@@ -179,10 +178,10 @@ class soft_max(Node):
 
     def forward(self):
         input_value = self.inbound_nodes[0].value
-        #TODO
+        self.value = self._soft_max(input_value)
 
     def backward(self):
-        pass #todo
+        pass
 
 
 class fully_connected(Node):
@@ -194,8 +193,8 @@ class fully_connected(Node):
         pass
 
 class cross_entropy(Node):
-    def __init__(self, y, a):
-        Node.__init__(self, [y, a])
+    def __init__(self, y, t):
+        Node.__init__(self, [y, t])
     def forward(self):
         pass
     def backward(self):
