@@ -127,15 +127,19 @@ class Relu(Node):
 
     def forward(self):
         input_value = self.inbound_nodes[0].value
-        self.value = self._relu(input_value)
+        self.mask = (input_value <= 0)
+        input_value[self.mask] = 0
+        self.value = input_value
+
 
     def backward(self):
         self.gradients = {n: np.zeros_like(n.value) for n in self.inbound_nodes}
         for n in self.outbound_nodes:
             grad_cost = n.gradients[self]
-            relu = self.value
-            relu[relu <= 0] = 0
-            self.gradients[self.inbound_nodes[0]] += relu
+            grad_cost[self.mask] = 0
+            d = grad_cost
+
+            self.gradients[self.inbound_nodes[0]] += d
 
 
 
@@ -195,7 +199,7 @@ class soft_max(Node):
     def backward(self):
         batch_size = self.inbound_nodes[1].value.shape[0]
         if self.inbound_nodes[0].value.size == self.inbound_nodes[1].value.size:
-            dx = (self.inbound_nodes[0].value - self.inbound_nodes[1].value) / batch_size
+            dx = (self.value - self.inbound_nodes[1].value) / batch_size
 
         self.gradients[self.inbound_nodes[0]] = dx
         self.gradients[self.inbound_nodes[1]] = dx
