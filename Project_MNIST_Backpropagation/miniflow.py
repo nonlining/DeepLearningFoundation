@@ -134,10 +134,10 @@ class Relu(Node):
         for n in self.outbound_nodes:
             grad_cost = n.gradients[self]
             relu = self.value
-            if relu >= 0:
-                self.gradients[self.inbound_nodes[0]] += 1
-            else:
-                self.gradients[self.inbound_nodes[0]] += 0
+            relu[relu <= 0] = 0
+            self.gradients[self.inbound_nodes[0]] += relu
+
+
 
 class MSE(Node):
 
@@ -158,10 +158,10 @@ class MSE(Node):
 
 
 class soft_max(Node):
-    def __init__(self, node):
+    def __init__(self, y, a):
         Node.__init__(self, [y, a])
 
-    def _cross_entropy_error(y, a):
+    def _cross_entropy_error(self, y, a):
         if len(y.shape) == 1:
             a = a.reshape(1, a.size)
             y = y.reshape(1, y.size)
@@ -171,7 +171,7 @@ class soft_max(Node):
 
         return -np.sum(np.log(y[np.arange(batch_size), a])) / batch_size
 
-    def _soft_max(x):
+    def _soft_max(self, x):
         if len(x.shape) > 1:
             tmp = np.max(x, axis = 1)
             x -= tmp.reshape((x.shape[0], 1))
@@ -188,20 +188,17 @@ class soft_max(Node):
 
     def forward(self):
         input_value = self.inbound_nodes[0].value
+        a = self.inbound_nodes[1].value
         self.value = self._soft_max(input_value)
         self.diff = self._cross_entropy_error(self.value, a)
 
     def backward(self):
-        pass
+        batch_size = self.inbound_nodes[1].value.shape[0]
+        if self.inbound_nodes[0].value.size == self.inbound_nodes[1].value.size:
+            dx = (self.inbound_nodes[0].value - self.inbound_nodes[1].value) / batch_size
 
-
-class fully_connected(Node):
-    def __init__(self, node):
-        Node.__init__(self, [Node])
-    def forward(self):
-        pass
-    def backword(self):
-        pass
+        self.gradients[self.inbound_nodes[0]] = dx
+        self.gradients[self.inbound_nodes[1]] = dx
 
 
 def topological_sort(feed_dict):
