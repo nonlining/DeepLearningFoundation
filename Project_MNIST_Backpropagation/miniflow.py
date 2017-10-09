@@ -159,7 +159,17 @@ class MSE(Node):
 
 class soft_max(Node):
     def __init__(self, node):
-        Node.__init__(self, [node])
+        Node.__init__(self, [y, a])
+
+    def _cross_entropy_error(y, a):
+        if len(y.shape) == 1:
+            a = a.reshape(1, a.size)
+            y = y.reshape(1, y.size)
+        if a.size == y.size:
+            a = a.argmax(axis=1)
+        batch_size = y.shape[0]
+
+        return -np.sum(np.log(y[np.arange(batch_size), a])) / batch_size
 
     def _soft_max(x):
         if len(x.shape) > 1:
@@ -179,6 +189,7 @@ class soft_max(Node):
     def forward(self):
         input_value = self.inbound_nodes[0].value
         self.value = self._soft_max(input_value)
+        self.diff = self._cross_entropy_error(self.value, a)
 
     def backward(self):
         pass
@@ -190,14 +201,6 @@ class fully_connected(Node):
     def forward(self):
         pass
     def backword(self):
-        pass
-
-class cross_entropy(Node):
-    def __init__(self, y, t):
-        Node.__init__(self, [y, t])
-    def forward(self):
-        pass
-    def backward(self):
         pass
 
 
