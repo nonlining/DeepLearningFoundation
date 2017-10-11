@@ -2,10 +2,10 @@
 # Name:        Digits
 # Purpose:
 #
-# Author:      jwang32
+# Author:      Min-Jung Wang
 #
 # Created:     07/07/2017
-# Copyright:   (c) jwang32 2017
+# Copyright:   (c) Min-Jung Wang 2017
 # Licence:     <your licence>
 #-------------------------------------------------------------------------------
 from sklearn.datasets import load_digits
