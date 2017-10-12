@@ -160,6 +160,10 @@ class MSE(Node):
         self.gradients[self.inbound_nodes[0]] = (2 / self.m) * self.diff
         self.gradients[self.inbound_nodes[1]] = (-2 / self.m) * self.diff
 
+class dropout(Node):
+    def __init__(self, x):
+        Node.__init__(self, [x])
+
 
 class soft_max(Node):
     def __init__(self, y, a):
