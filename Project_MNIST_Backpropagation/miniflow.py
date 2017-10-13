@@ -164,6 +164,11 @@ class dropout(Node):
     def __init__(self, x):
         Node.__init__(self, [x])
 
+    def forward(self):
+        pass
+    def backward(self):
+        pass
+
 
 class soft_max(Node):
     def __init__(self, y, a):
