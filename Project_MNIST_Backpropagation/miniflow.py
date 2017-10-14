@@ -54,21 +54,24 @@ class Linear(Node):
 
 
 def conv(arr, shape, kernels, kernel_size, strides, b):
-    out_height = math.ceil((shape[0] - kernel_size[0] + 1)/float(strides[0]))
-    out_width  = math.ceil((shape[1] - kernel_size[1] + 1)/float(strides[1]))
-
+    out_height = (shape[0] - kernel_size[0])/float(strides[0]) + 1
+    out_width  = (shape[1] - kernel_size[1])/float(strides[1]) + 1
     c = np.zeros( (kernels.shape[0] ,int(out_height)*int(out_width)) )
-
     l = 0
     for kernel in kernels:
         count = 0
+        y = 0
+        x = 0
         for j in range(int(out_height)):
             for i in range(int(out_width)):
                 res = 0
-                for k in range(0, kernel_size[1], strides[1]):
-                    res += np.dot(kernel[k*kernel_size[0]:(k+1)*kernel_size[0]], arr[i + j*shape[1] + shape[1]*k  :i + j*shape[1] + kernel_size[0] + shape[1]*k])
+                for k in range(0, kernel_size[1]):
+                    res += np.dot(kernel[k*kernel_size[0]:(k+1)*kernel_size[0]], arr[x + y*shape[1] + shape[1]*k  :x + y*shape[1] + kernel_size[0] + shape[1]*k])
                 c[l][count] = res + b[l]
                 count += 1
+                x = x + strides[1]
+            x = 0
+            y = y + strides[0]
         l += 1
 
     return c

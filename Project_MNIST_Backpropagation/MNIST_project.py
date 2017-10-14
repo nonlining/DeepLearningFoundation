@@ -57,9 +57,7 @@ def main():
 
     activation_1 = Relu(conv_layer1)
 
-    output = soft_max(activation_1)
-
-
+    #output = soft_max(activation_1, y)
 
 
     feed_dict = {
@@ -76,8 +74,10 @@ def main():
     trainables = [W1, b1, W2, b2]
     forward(graph)
 
-    print graph[6].value
-    #print graph
+    outp1 = graph[6].value
+    print outp1[0].shape
+    for i in outp1[:][0]:
+        print i
 
 if __name__ == '__main__':
     main()
