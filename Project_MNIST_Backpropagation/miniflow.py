@@ -164,6 +164,7 @@ class MSE(Node):
         self.gradients[self.inbound_nodes[1]] = (-2 / self.m) * self.diff
 
 class dropout(Node):
+
     def __init__(self, x):
         Node.__init__(self, [x])
 
@@ -172,8 +173,18 @@ class dropout(Node):
     def backward(self):
         pass
 
+class pooling(Node):
+    def __init__(self, x):
+        Node.__init__(self, [x])
+
+    def forward(self):
+        pass
+
+    def backward(self):
+        pass
 
 class soft_max(Node):
+
     def __init__(self, y, a):
         Node.__init__(self, [y, a])
 
