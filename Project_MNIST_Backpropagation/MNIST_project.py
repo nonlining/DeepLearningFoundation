@@ -30,6 +30,8 @@ def main():
     y_ = data['target']
 
     n_features = X_.shape[1]
+    print X_.shape
+
 
     # parameters
     n_hidden = 8
