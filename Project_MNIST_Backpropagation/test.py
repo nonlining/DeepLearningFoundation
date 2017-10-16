@@ -49,26 +49,28 @@ def conv3(arr, shape, kernels, kernel_size, stride, b):
 
     img = np.pad(arr, [(0,0), (0, 0), (0, 0)], 'constant')
 
-    #col = np.zeros((N, filter_h, filter_w, out_h, out_w))
+    col = np.zeros((N, kernel_size[0], kernel_size[1], out_height, out_width))
 
     c = np.zeros((kernels.shape[0] , out_height*out_width))
-    for y in range(out_height):
+    for y in range(kernel_size[0]):
         y_max = y + stride[0]*out_height
-        for x in range(out_width):
+        for x in range(kernel_size[1]):
             x_max = x + stride[1]*out_width
-            print img[:,y:y_max:stride[0], x:x_max:stride[1]]
+            col[:,y,x,:,:] = img[:,y:y_max:stride[0], x:x_max:stride[1]]
+
+    col = col.transpose(0, 4, 1, 2, 3)
+    col.reshape(N*out_height*out_width, -1)
+
+    print col
 
 
-
-
-    return c
+    return col
 
 def im2col(input_data, filter_h, filter_w, stride=1, pad=0):
 
     N, C, H, W = input_data.shape
     out_h = (H + 2*pad - filter_h)//stride + 1
     out_w = (W + 2*pad - filter_w)//stride + 1
-    print input_data.shape
 
     img = np.pad(input_data, [(0,0), (0,0), (pad, pad), (pad, pad)], 'constant')
 
@@ -78,11 +80,12 @@ def im2col(input_data, filter_h, filter_w, stride=1, pad=0):
         y_max = y + stride*out_h
         for x in range(filter_w):
             x_max = x + stride*out_w
-            print img[:, :, y:y_max:stride, x:x_max:stride]
+            #print img[:, :, y:y_max:stride, x:x_max:stride]
             col[:, :, y, x, :, :] = img[:, :, y:y_max:stride, x:x_max:stride]
-
+    print col
 
     col = col.transpose(0, 4, 5, 1, 2, 3).reshape(N*out_h*out_w, -1)
+    print col
     return col
 
 def main():
