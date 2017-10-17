@@ -76,10 +76,9 @@ def main():
     trainables = [W1, b1, W2, b2]
     forward(graph)
 
-    outp1 = graph[6].value
-    print outp1[0].shape
-    for i in outp1[:][0]:
-        print i
+    out_shape = graph[-2].value.shape
+    print out_shape
+
 
 if __name__ == '__main__':
     main()

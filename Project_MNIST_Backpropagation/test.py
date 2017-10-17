@@ -43,9 +43,9 @@ def conv2(arr, shape, kernels, kernel_size, strides, b):
 
 def conv3(arr, shape, kernels, kernel_size, stride, b):
     N, H, W = arr.shape
+
     out_height = (shape[0] - kernel_size[0])/stride[0] + 1
     out_width  = (shape[1] - kernel_size[1])/stride[1] + 1
-    #arr = np.array(arr)
 
     img = np.pad(arr, [(0,0), (0, 0), (0, 0)], 'constant')
 
@@ -58,11 +58,13 @@ def conv3(arr, shape, kernels, kernel_size, stride, b):
             x_max = x + stride[1]*out_width
             col[:,y,x,:,:] = img[:,y:y_max:stride[0], x:x_max:stride[1]]
 
-    col = col.transpose(0, 4, 1, 2, 3).reshape(N*out_height*out_width, -1)
-    print col.shape, kernels.shape
+    col = col.transpose(0, 3, 4, 1, 2).reshape(N*out_height*out_width, -1)
+    res = np.dot(kernels, col.T) + b[0]
+    print N
+    res = res.reshape(N, out_height*out_height)
+    print res
 
-
-    return col
+    return res
 
 def im2col(input_data, filter_h, filter_w, stride=1, pad=0):
 
@@ -80,7 +82,7 @@ def im2col(input_data, filter_h, filter_w, stride=1, pad=0):
             x_max = x + stride*out_w
             col[:, :, y, x, :, :] = img[:, :, y:y_max:stride, x:x_max:stride]
     col = col.transpose(0, 4, 5, 1, 2, 3).reshape(N*out_h*out_w, -1)
-    print col.shape
+    print col
 
     return col
 
@@ -95,13 +97,15 @@ def main():
 
     X = [i+1 for i in range(64)]
 
+
     input = np.array(X).reshape(1, 1, 8, 8)
 
     start = time.time()
 
 
     result = conv2(X, (8,8) ,W_layer1, kernel_size, (1,1), b_layer1)
-    print result.shape
+
+    print "conv2 shape",result.shape
 
     end = time.time()
 
@@ -117,10 +121,16 @@ def main():
     print end - start
 
     print "--------------"
+
+
+    X = np.array(X).reshape(-1,64)
+    print X.shape
+    for i in range(3):
+        X = np.vstack((X,X))
+    print X.shape
+
     result2 = conv3(np.array(X).reshape(-1,8,8), (8,8) ,W_layer1, kernel_size, (1,1), b_layer1)
-
-
-
+    print result2.shape
 
 
 
