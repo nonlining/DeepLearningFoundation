@@ -33,6 +33,7 @@ def main():
     print X_.shape
 
 
+
     # parameters
     fitter_numbers = 8
     kernel_size = (3,3)
@@ -44,9 +45,6 @@ def main():
     W_layer2 = np.random.normal(0, 0.1, (fitter_numbers, 1))
     b_layer2 = np.random.normal(0, 0.1, (1, ))
 
-    # test
-    #print X_[0].shape, W_layer1.shape
-    #print conv(X_[0], (8,8) ,W_layer1, kernel_size, (1,1)) + b_layer1[0]
 
     # network
     X, y = Input(), Input()
@@ -74,10 +72,16 @@ def main():
     graph = topological_sort(feed_dict)
 
     trainables = [W1, b1, W2, b2]
+
     forward(graph)
 
-    out_shape = graph[-2].value.shape
-    print out_shape
+    out = graph[-1].value
+
+    #for i in out:
+    #    print i
+    print out.shape
+    print graph[-1]
+    print graph
 
 
 if __name__ == '__main__':

@@ -53,28 +53,8 @@ class Linear(Node):
             self.gradients[self.inbound_nodes[2]] += np.sum(grad_cost, axis=0, keepdims=False)
 
 
-def conv(arr, shape, kernels, kernel_size, strides, b):
-    out_height = (shape[0] - kernel_size[0])/strides[0] + 1
-    out_width  = (shape[1] - kernel_size[1])/strides[1] + 1
-    c = np.zeros((kernels.shape[0] , out_height*out_width))
-    l = 0
-    for kernel in kernels:
-        count = 0
-        y = 0
-        x = 0
-        for j in range(out_height):
-            for i in range(out_width):
-                res = 0
-                for k in range(0, kernel_size[1]):
-                    res += np.dot(kernel[k*kernel_size[0]:(k+1)*kernel_size[0]], arr[x + y*shape[1] + shape[1]*k  :x + y*shape[1] + kernel_size[0] + shape[1]*k])
-                c[l][count] = res + b[l]
-                count += 1
-                x = x + strides[1]
-            x = 0
-            y = y + strides[0]
-        l += 1
 
-    return c
+
 
 class Conv(Node):
     def __init__(self, X, W, b, input_shape, kernel_size, strides):
@@ -83,18 +63,77 @@ class Conv(Node):
         self.kernel_size = kernel_size
         self.strides = strides
 
+    def conv(self, X, shape, kernels, kernel_size, strides, b):
+        out_height = (shape[0] - kernel_size[0])/strides[0] + 1
+        out_width  = (shape[1] - kernel_size[1])/strides[1] + 1
+        c = np.zeros((kernels.shape[0] , out_height*out_width))
+        l = 0
+        for kernel in kernels:
+            count = 0
+            y = 0
+            x = 0
+            for j in range(out_height):
+                for i in range(out_width):
+                    res = 0
+                    for k in range(0, kernel_size[1]):
+                        res += np.dot(kernel[k*kernel_size[0]:(k+1)*kernel_size[0]], X[x + y*shape[1] + shape[1]*k  :x + y*shape[1] + kernel_size[0] + shape[1]*k])
+                    c[l][count] = res + b[l]
+                    count += 1
+                    x = x + strides[1]
+                x = 0
+                y = y + strides[0]
+            l += 1
+        return c
+
+    def conv2(self, X, shape, kernels, kernel_size, stride, b):
+        N, H, W = X.shape
+
+        out_height = (shape[0] - kernel_size[0])/stride[0] + 1
+        out_width  = (shape[1] - kernel_size[1])/stride[1] + 1
+
+        img = np.pad(X, [(0,0), (0, 0), (0, 0)], 'constant')
+
+        col = np.zeros((N, kernel_size[0], kernel_size[1], out_height, out_width))
+
+        c = np.zeros((kernels.shape[0] , out_height*out_width))
+        for y in range(kernel_size[0]):
+            y_max = y + stride[0]*out_height
+            for x in range(kernel_size[1]):
+                x_max = x + stride[1]*out_width
+                col[:,y,x,:,:] = img[:,y:y_max:stride[0], x:x_max:stride[1]]
+
+        col = col.transpose(0, 3, 4, 1, 2).reshape(N*out_height*out_width, -1)
+
+        res = np.dot(kernels, col.T) + b[0]
+
+        res = res.reshape(N, kernels.shape[0] ,out_height*out_height)
+
+        return res
+    '''
     def forward(self):
         X = self.inbound_nodes[0].value
         W = self.inbound_nodes[1].value
         b = self.inbound_nodes[2].value
         self.value = None
         for x in X:
-            a = conv(X[0], self.input_shape, W, self.kernel_size, self.strides, b)
+            a = self.conv(x, self.input_shape, W, self.kernel_size, self.strides, b)
 
             if self.value is None:
                 self.value = a
             else:
                 self.value = np.dstack( (self.value ,a))
+        self.value = self.value.transpose(2, 0, 1)
+    '''
+
+    def forward(self):
+        X = self.inbound_nodes[0].value
+        W = self.inbound_nodes[1].value
+        b = self.inbound_nodes[2].value
+
+        X = X.reshape(X.shape[0], self.input_shape[0], self.input_shape[1])
+
+        self.value = self.conv2(X, self.input_shape, W, self.kernel_size, self.strides, b)
+
 
     def backward(self):
         self.gradients = {n: np.zeros_like(n.value) for n in self.inbound_nodes}
