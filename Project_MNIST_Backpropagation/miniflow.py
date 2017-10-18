@@ -54,8 +54,6 @@ class Linear(Node):
 
 
 
-
-
 class Conv(Node):
     def __init__(self, X, W, b, input_shape, kernel_size, strides):
         Node.__init__(self, [X, W, b])
@@ -137,7 +135,11 @@ class Conv(Node):
 
     def backward(self):
         self.gradients = {n: np.zeros_like(n.value) for n in self.inbound_nodes}
-        #TODO
+        for n in self.outbound_nodes:
+            grad_cost = n.gradients[self]
+            print grad_cost.shape
+
+            self.gradients[self.inbound_nodes[2]] += np.sum(grad_cost, axis=0, keepdims=False)
 
 
 class Sigmoid(Node):
