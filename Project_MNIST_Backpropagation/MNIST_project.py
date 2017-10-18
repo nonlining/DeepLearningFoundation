@@ -34,14 +34,14 @@ def main():
 
 
     # parameters
-    n_hidden = 8
+    fitter_numbers = 8
     kernel_size = (3,3)
 
     # init layers
-    W_layer1 = np.random.normal(0, 0.1, (n_hidden, kernel_size[0]*kernel_size[1]))
-    b_layer1 = np.random.normal(0, 0.1, (n_hidden, ))
+    W_layer1 = np.random.normal(0, 0.1, (fitter_numbers, kernel_size[0]*kernel_size[1]))
+    b_layer1 = np.random.normal(0, 0.1, (fitter_numbers, ))
 
-    W_layer2 = np.random.normal(0, 0.1, (n_hidden, 1))
+    W_layer2 = np.random.normal(0, 0.1, (fitter_numbers, 1))
     b_layer2 = np.random.normal(0, 0.1, (1, ))
 
     # test

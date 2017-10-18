@@ -60,9 +60,11 @@ def conv3(arr, shape, kernels, kernel_size, stride, b):
 
     col = col.transpose(0, 3, 4, 1, 2).reshape(N*out_height*out_width, -1)
     res = np.dot(kernels, col.T) + b[0]
-    print N
-    res = res.reshape(N, out_height*out_height)
+
+    res = res.reshape(N, kernels.shape[0] ,out_height*out_height)
+
     print res
+
 
     return res
 
@@ -122,12 +124,15 @@ def main():
 
     print "--------------"
 
-
     X = np.array(X).reshape(-1,64)
-    print X.shape
+
     for i in range(3):
         X = np.vstack((X,X))
-    print X.shape
+
+
+    for i in range(3):
+        W_layer1 = np.vstack((W_layer1,W_layer1))
+
 
     result2 = conv3(np.array(X).reshape(-1,8,8), (8,8) ,W_layer1, kernel_size, (1,1), b_layer1)
     print result2.shape
