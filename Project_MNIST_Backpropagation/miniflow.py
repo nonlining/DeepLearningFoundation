@@ -137,6 +137,7 @@ class Conv(Node):
         self.gradients = {n: np.zeros_like(n.value) for n in self.inbound_nodes}
         for n in self.outbound_nodes:
             grad_cost = n.gradients[self]
+            print "dw", self.gradients[self.inbound_nodes[1]].shape, self.inbound_nodes[1].value.T.shape, grad_cost.shape
 
             self.gradients[self.inbound_nodes[2]] += np.sum(np.sum(grad_cost, axis=2, keepdims=False), axis = 0,keepdims=False)
 
