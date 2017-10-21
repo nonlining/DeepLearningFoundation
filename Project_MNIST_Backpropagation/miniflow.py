@@ -140,7 +140,9 @@ class Conv(Node):
             grad_cost = n.gradients[self]
             grad_out = grad_cost.transpose(0,2,1).reshape(-1, filterNumber)
 
+            col = np.dot(grad_out, self.inbound_nodes[1].value)
 
+            #self.gradients[self.inbound_nodes[0]] += np.dot(grad_cost, self.inbound_nodes[1].value.T)
             self.gradients[self.inbound_nodes[1]] += np.dot(grad_out.T, self.col)
             self.gradients[self.inbound_nodes[2]] += np.sum(np.sum(grad_cost, axis=2, keepdims=False), axis = 0,keepdims=False)
 
