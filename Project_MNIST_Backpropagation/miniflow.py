@@ -106,7 +106,7 @@ class Conv(Node):
 
         res = res.reshape(N, kernels.shape[0] ,out_height*out_height)
 
-        return res
+        return res, col
     '''
     def forward(self):
         X = self.inbound_nodes[0].value
@@ -130,15 +130,18 @@ class Conv(Node):
 
         X = X.reshape(X.shape[0], self.input_shape[0], self.input_shape[1])
 
-        self.value = self.conv2(X, self.input_shape, W, self.kernel_size, self.strides, b)
+        self.value ,self.col = self.conv2(X, self.input_shape, W, self.kernel_size, self.strides, b)
 
 
     def backward(self):
         self.gradients = {n: np.zeros_like(n.value) for n in self.inbound_nodes}
         for n in self.outbound_nodes:
+            filterNumber, filterSize = self.inbound_nodes[1].value.shape
             grad_cost = n.gradients[self]
-            print "dw", self.gradients[self.inbound_nodes[1]].shape, self.inbound_nodes[1].value.T.shape, grad_cost.shape
+            grad_out = grad_cost.transpose(0,2,1).reshape(-1, filterNumber)
 
+
+            self.gradients[self.inbound_nodes[1]] += np.dot(grad_out.T, self.col)
             self.gradients[self.inbound_nodes[2]] += np.sum(np.sum(grad_cost, axis=2, keepdims=False), axis = 0,keepdims=False)
 
 
