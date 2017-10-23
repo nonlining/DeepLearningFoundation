@@ -212,10 +212,13 @@ class MSE(Node):
 class dropout(Node):
 
     def __init__(self, x):
-        Node.__init__(self, [x])
+        Node.__init__(self, [x], ratio)
+        self.ratio = ratio
+        self.mask = None
 
     def forward(self):
         pass
+
     def backward(self):
         pass
 
