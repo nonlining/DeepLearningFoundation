@@ -216,8 +216,13 @@ class dropout(Node):
         self.ratio = ratio
         self.mask = None
 
-    def forward(self):
-        pass
+    def forward(self, train_flg=True):
+        x = self.inbound_nodes[0].value
+        if train_flg:
+            self.mask = np.random.rand(*x.shape) > self.dropout_ratio
+            self.value = x * self.mask
+        else:
+            self.value = x * (1.0 - self.dropout_ratio)
 
     def backward(self):
         pass
