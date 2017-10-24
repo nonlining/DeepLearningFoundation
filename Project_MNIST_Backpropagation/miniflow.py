@@ -228,7 +228,7 @@ class dropout(Node):
         pass
 
 class pooling(Node):
-    def __init__(self, x):
+    def __init__(self, x, kernel_size, strides):
         Node.__init__(self, [x])
 
     def forward(self):
@@ -325,6 +325,8 @@ def forward_and_backward(graph):
     for n in graph[::-1]:
         n.backward()
 
+def predict(graph):
+    forward(graph)
 
 def forward(graph):
     for n in graph:
