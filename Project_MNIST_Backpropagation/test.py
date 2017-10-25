@@ -19,7 +19,7 @@ def main():
     n_hidden = 10
     kernel_size = (3,3)
 
-    W_layer0 = np.array([[1, 0, 1, 1, 0, 1, 1, 0, 1]])
+    W_layer0 = np.array([[1., 0., 1., 1., 0., 1., 1., 0., 1.]])
     b_layer1 = np.ones(n_hidden)
 
     X_ = [i+1 for i in range(64)]
