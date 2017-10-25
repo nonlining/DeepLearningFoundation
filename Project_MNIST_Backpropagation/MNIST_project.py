@@ -77,8 +77,6 @@ def main():
 
     out = graph[-1].value
 
-    #for i in out:
-    #    print i
     print out.shape
     print graph[-1]
     print graph
