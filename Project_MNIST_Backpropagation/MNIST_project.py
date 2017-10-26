@@ -19,6 +19,7 @@ epochs = 10
 np.random.seed(1)
 
 def main():
+
     data = load_digits()
 
     max_value = np.amax(data['data'])
@@ -26,13 +27,11 @@ def main():
 
     X_ = normalized(data['data'], max_value, min_value)
 
-
     y_ = data['target']
 
     n_features = X_.shape[1]
     print X_.shape
-
-
+    print y_.shape
 
     # parameters
     fitter_numbers = 8
@@ -40,24 +39,23 @@ def main():
 
     # init layers
     W_layer1 = np.random.normal(0, 0.1, (fitter_numbers, kernel_size[0]*kernel_size[1]))
-    b_layer1 = np.random.normal(0, 0.1, (fitter_numbers, ))
-
-    W_layer2 = np.random.normal(0, 0.1, (fitter_numbers, 1))
-    b_layer2 = np.random.normal(0, 0.1, (1, ))
-
+    b_layer1 = np.zeros(fitter_numbers, )
+    W_layer2 = np.random.normal(0, 0.1, (288, 1))
+    b_layer2 = np.zeros(1, )
 
     # network
     X, y = Input(), Input()
 
     W1, b1 = Input(), Input()
-
     W2, b2 = Input(), Input()
 
     conv_layer1 = Conv(X, W1, b1, (8,8), kernel_size, (1,1))
 
     activation_1 = Relu(conv_layer1)
 
-    #output = soft_max(activation_1, y)
+    linear = Linear(activation_1, W2, b2)
+
+    output = soft_max(linear, y)
 
 
     feed_dict = {
@@ -65,21 +63,15 @@ def main():
         y: y_,
         W1: W_layer1,
         b1: b_layer1,
-        W2: W_layer2,
-        b2: b_layer2
+        W2:W_layer2,
+        b2:b_layer2
     }
 
     graph = topological_sort(feed_dict)
 
     trainables = [W1, b1, W2, b2]
 
-    forward(graph)
-
-    out = graph[-1].value
-
-    print out.shape
-    print graph[-1]
-    print graph
+    forward_and_backward(graph)
 
 
 if __name__ == '__main__':

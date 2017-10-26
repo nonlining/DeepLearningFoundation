@@ -58,7 +58,6 @@ def main():
     trainables = [W1, b1]
 
     forward_and_backward(graph)
-    print graph
 
     print graph[-1].value.shape
 

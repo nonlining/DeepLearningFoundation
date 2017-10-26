@@ -41,7 +41,9 @@ class Linear(Node):
         W = self.inbound_nodes[1].value
         b = self.inbound_nodes[2].value
 
-        self.value = np.dot(X, W) + b
+        X_ = X.reshape(self.inbound_nodes[0].value.shape[0], -1)
+
+        self.value = np.dot(X_, W) + b
 
 
     def backward(self):
@@ -278,6 +280,8 @@ class soft_max(Node):
     def _soft_max(self, x):
         if len(x.shape) > 1:
             tmp = np.max(x, axis = 1)
+            print x.shape
+            print tmp.reshape((x.shape[0], 1))
             x -= tmp.reshape((x.shape[0], 1))
             x = np.exp(x)
             tmp = np.sum(x, axis = 1)
@@ -294,7 +298,7 @@ class soft_max(Node):
         input_value = self.inbound_nodes[0].value
         a = self.inbound_nodes[1].value
         self.value = self._soft_max(input_value)
-        self.diff = self._cross_entropy_error(self.value, a)
+        self.diff = self._cross_entropy_error(a, self.value)
 
     def backward(self):
         batch_size = self.inbound_nodes[1].value.shape[0]
