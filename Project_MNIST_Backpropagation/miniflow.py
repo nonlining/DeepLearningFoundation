@@ -114,9 +114,17 @@ class Conv(Node):
         out_hight = (H - filter_h)//stride[0] + 1
         out_wide =  (H - filter_h)//stride[1] + 1
 
-        for i in range(filter_h):
-            for j in range(filter_w):
-                pass
+        col = X.reshape(N, out_hight, out_wide, filter_h, filter_w).transpose(0, 3, 4, 1, 2)
+        t = np.zeros((N, H + stride[0] - 1, W + stride[1] - 1))
+
+        for y in range(filter_h):
+            y_max = y + stride[0]*out_hight
+            for x in range(filter_w):
+                x_max = x + stride[1]*out_wide
+                t[:, y:y_max:stride[0], x:x_max:stride[1]] += col[:, y, x, :, :]
+        t = t.reshape(N, shape[0]*shape[1])
+
+        return t
 
     '''
     def forward(self):
@@ -155,12 +163,9 @@ class Conv(Node):
 
             col = np.dot(grad_out, self.inbound_nodes[1].value)
 
-            print "grad_out", grad_out.shape
-            print "col", col.shape
-            print "self.gradients[self.inbound_nodes[0]]", self.gradients[self.inbound_nodes[0]].shape
-            self.grad2input(col, self.n, self.input_shape, self.kernel_size, self.strides)
+            t = self.grad2input(col, self.n, self.input_shape, self.kernel_size, self.strides)
 
-            #self.gradients[self.inbound_nodes[0]] += np.dot(grad_cost, self.inbound_nodes[1].value.T)
+            self.gradients[self.inbound_nodes[0]] += t
             self.gradients[self.inbound_nodes[1]] += np.dot(grad_out.T, self.col)
             self.gradients[self.inbound_nodes[2]] += np.sum(np.sum(grad_cost, axis=2, keepdims=False), axis = 0,keepdims=False)
 

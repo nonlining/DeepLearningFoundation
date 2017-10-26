@@ -22,7 +22,7 @@ def main():
     W_layer0 = np.array([[1., 0., 1., 1., 0., 1., 1., 0., 1.]])
     b_layer1 = np.ones(n_hidden)
 
-    X_ = [i+1 for i in range(64)]
+    X_ = [float(i+1) for i in range(64)]
     X_ = np.array(X_).reshape(-1,64)
 
     for i in range(3):
