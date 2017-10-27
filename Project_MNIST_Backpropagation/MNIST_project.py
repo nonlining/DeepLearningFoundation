@@ -29,10 +29,6 @@ def main():
     n_values = np.max(y_) + 1
     y_ = np.eye(n_values, dtype=int)[y_]
 
-    n_features = X_.shape[1]
-    print X_.shape
-    print y_.shape
-
     # parameters
     fitter_numbers = 10
     kernel_size = (3,3)
@@ -69,14 +65,19 @@ def main():
     graph = topological_sort(feed_dict)
 
     trainables = [W1, b1, W2, b2]
-    epochs = 100
+    epochs = 1000
+    loss_list = []
 
     for i in range(epochs):
 
         forward_and_backward(graph)
         sgd_update(trainables)
         loss = graph[-1].diff
-        print loss
+        loss_list.append(loss)
+
+    plt.figure()
+    plt.plot(loss_list)
+    plt.show()
 
 
 if __name__ == '__main__':
