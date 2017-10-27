@@ -40,6 +40,7 @@ class Linear(Node):
         X = self.inbound_nodes[0].value
         W = self.inbound_nodes[1].value
         b = self.inbound_nodes[2].value
+        self.orishape = X.shape
 
         X_ = X.reshape(self.inbound_nodes[0].value.shape[0], -1)
 
@@ -50,6 +51,7 @@ class Linear(Node):
         self.gradients = {n: np.zeros_like(n.value) for n in self.inbound_nodes}
         for n in self.outbound_nodes:
             grad_cost = n.gradients[self]
+            print self.gradients[self.inbound_nodes[0]].shape, grad_cost.shape, self.inbound_nodes[1].value.T.shape
             self.gradients[self.inbound_nodes[0]] += np.dot(grad_cost, self.inbound_nodes[1].value.T)
             self.gradients[self.inbound_nodes[1]] += np.dot(self.inbound_nodes[0].value.T, grad_cost)
             self.gradients[self.inbound_nodes[2]] += np.sum(grad_cost, axis=0, keepdims=False)
@@ -267,21 +269,21 @@ class soft_max(Node):
     def __init__(self, y, a):
         Node.__init__(self, [y, a])
 
-    def _cross_entropy_error(self, y, a):
+    def _cross_entropy_error(self, y, t):
+
         if len(y.shape) == 1:
-            a = a.reshape(1, a.size)
+            t = t.reshape(1, t.size)
             y = y.reshape(1, y.size)
-        if a.size == y.size:
-            a = a.argmax(axis=1)
+        if t.size == y.size:
+            t = t.argmax(axis=1)
         batch_size = y.shape[0]
 
-        return -np.sum(np.log(y[np.arange(batch_size), a])) / batch_size
+        return -np.sum(np.log(y[np.arange(batch_size), t])) / batch_size
 
     def _soft_max(self, x):
         if len(x.shape) > 1:
             tmp = np.max(x, axis = 1)
-            print x.shape
-            print tmp.reshape((x.shape[0], 1))
+
             x -= tmp.reshape((x.shape[0], 1))
             x = np.exp(x)
             tmp = np.sum(x, axis = 1)
@@ -296,14 +298,16 @@ class soft_max(Node):
 
     def forward(self):
         input_value = self.inbound_nodes[0].value
-        a = self.inbound_nodes[1].value
+        y = self.inbound_nodes[1].value
         self.value = self._soft_max(input_value)
-        self.diff = self._cross_entropy_error(a, self.value)
+        self.diff = self._cross_entropy_error(y, self.value)
 
     def backward(self):
         batch_size = self.inbound_nodes[1].value.shape[0]
+        print self.inbound_nodes[0].value.size , self.inbound_nodes[1].value.size
         if self.inbound_nodes[0].value.size == self.inbound_nodes[1].value.size:
             dx = (self.value - self.inbound_nodes[1].value) / batch_size
+        print dx.shape
 
         self.gradients[self.inbound_nodes[0]] = dx
         self.gradients[self.inbound_nodes[1]] = dx

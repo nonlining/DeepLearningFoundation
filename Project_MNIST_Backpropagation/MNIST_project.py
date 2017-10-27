@@ -28,6 +28,8 @@ def main():
     X_ = normalized(data['data'], max_value, min_value)
 
     y_ = data['target']
+    n_values = np.max(y_) + 1
+    y_ = np.eye(n_values, dtype=int)[y_]
 
     n_features = X_.shape[1]
     print X_.shape
@@ -40,8 +42,8 @@ def main():
     # init layers
     W_layer1 = np.random.normal(0, 0.1, (fitter_numbers, kernel_size[0]*kernel_size[1]))
     b_layer1 = np.zeros(fitter_numbers, )
-    W_layer2 = np.random.normal(0, 0.1, (288, 1))
-    b_layer2 = np.zeros(1, )
+    W_layer2 = np.random.normal(0, 0.1, (36*8, 10))
+    b_layer2 = np.zeros(10, )
 
     # network
     X, y = Input(), Input()
