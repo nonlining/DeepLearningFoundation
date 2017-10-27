@@ -14,8 +14,6 @@ from sklearn.utils import shuffle, resample
 import numpy as np
 from miniflow import *
 
-epochs = 10
-
 np.random.seed(1)
 
 def main():
@@ -36,13 +34,13 @@ def main():
     print y_.shape
 
     # parameters
-    fitter_numbers = 8
+    fitter_numbers = 10
     kernel_size = (3,3)
 
     # init layers
     W_layer1 = np.random.normal(0, 0.1, (fitter_numbers, kernel_size[0]*kernel_size[1]))
     b_layer1 = np.zeros(fitter_numbers, )
-    W_layer2 = np.random.normal(0, 0.1, (36*8, 10))
+    W_layer2 = np.random.normal(0, 0.1, (36*fitter_numbers, 10))
     b_layer2 = np.zeros(10)
 
     # network
@@ -59,7 +57,6 @@ def main():
 
     output = soft_max(linear, y)
 
-
     feed_dict = {
         X: X_,
         y: y_,
@@ -72,8 +69,14 @@ def main():
     graph = topological_sort(feed_dict)
 
     trainables = [W1, b1, W2, b2]
+    epochs = 100
 
-    forward_and_backward(graph)
+    for i in range(epochs):
+
+        forward_and_backward(graph)
+        sgd_update(trainables)
+        loss = graph[-1].diff
+        print loss
 
 
 if __name__ == '__main__':
