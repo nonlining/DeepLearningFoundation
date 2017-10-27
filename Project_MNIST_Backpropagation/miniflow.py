@@ -51,8 +51,10 @@ class Linear(Node):
         self.gradients = {n: np.zeros_like(n.value) for n in self.inbound_nodes}
         for n in self.outbound_nodes:
             grad_cost = n.gradients[self]
-            print self.gradients[self.inbound_nodes[0]].shape, grad_cost.shape, self.inbound_nodes[1].value.T.shape
-            self.gradients[self.inbound_nodes[0]] += np.dot(grad_cost, self.inbound_nodes[1].value.T)
+            print self.gradients[self.inbound_nodes[1]].shape, grad_cost.shape, self.inbound_nodes[0].value.T.shape
+
+            #self.gradients[self.inbound_nodes[0]] += np.dot(grad_cost, self.inbound_nodes[1].value.T)
+            self.gradients[self.inbound_nodes[0]] += np.dot(grad_cost, self.inbound_nodes[1].value.T).reshape(*self.orishape)
             self.gradients[self.inbound_nodes[1]] += np.dot(self.inbound_nodes[0].value.T, grad_cost)
             self.gradients[self.inbound_nodes[2]] += np.sum(grad_cost, axis=0, keepdims=False)
 

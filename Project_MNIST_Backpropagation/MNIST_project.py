@@ -43,7 +43,7 @@ def main():
     W_layer1 = np.random.normal(0, 0.1, (fitter_numbers, kernel_size[0]*kernel_size[1]))
     b_layer1 = np.zeros(fitter_numbers, )
     W_layer2 = np.random.normal(0, 0.1, (36*8, 10))
-    b_layer2 = np.zeros(10, )
+    b_layer2 = np.zeros(10)
 
     # network
     X, y = Input(), Input()
