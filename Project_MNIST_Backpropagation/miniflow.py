@@ -108,7 +108,8 @@ class Conv(Node):
 
         res = np.dot(col, kernels.T) + b
 
-        res = res.reshape(N, kernels.shape[0] ,out_height*out_height)
+        res = res.reshape(N, out_height, out_width, -1).transpose(0, 3, 1, 2)
+        res = res.reshape(res.shape[0], res.shape[1], out_width*out_height)
 
         return res, col
     def grad2input(self, X, N, shape, kernel_size, stride):
