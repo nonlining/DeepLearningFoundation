@@ -106,7 +106,7 @@ class Conv(Node):
 
         col = col.transpose(0, 3, 4, 1, 2).reshape(N*out_height*out_width, -1)
 
-        res = np.dot(kernels, col.T) + b[0]
+        res = np.dot(col, kernels.T) + b
 
         res = res.reshape(N, kernels.shape[0] ,out_height*out_height)
 

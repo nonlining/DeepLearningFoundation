@@ -65,7 +65,7 @@ def main():
     graph = topological_sort(feed_dict)
 
     trainables = [W1, b1, W2, b2]
-    epochs = 100
+    epochs = 10
     loss_list = []
 
     for i in range(epochs):
