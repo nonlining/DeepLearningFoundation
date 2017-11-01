@@ -65,7 +65,7 @@ def main():
     graph = topological_sort(feed_dict)
 
     trainables = [W1, b1, W2, b2]
-    epochs = 10
+    epochs = 1000
     loss_list = []
 
     for i in range(epochs):
@@ -73,6 +73,7 @@ def main():
         forward_and_backward(graph)
         sgd_update(trainables)
         loss = graph[-1].diff
+        print("Epoch: {}, Loss: {:.3f}".format(i+1, loss))
         loss_list.append(loss)
 
     plt.figure()
