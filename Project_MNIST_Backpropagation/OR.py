@@ -41,7 +41,7 @@ def main():
 
     trainables = [W1, b1]
 
-    epochs = 100
+    epochs = 500000
     learning_rate=0.1
     for i in range(epochs):
 
@@ -49,10 +49,17 @@ def main():
         for t in trainables:
             partial = t.gradients[t]
             t.value -= learning_rate * partial
-        print "MSE",graph[-1].value
+        if i%10000 == 0:
+            print "epoch",i,"MSE",graph[-1].value
 
-    print W1.value
-    print b1.value
+    print "W", W1.value
+    print "B",b1.value[0]
+
+    X.value = np.array([[1,1], [1,0], [0,1],[0,0]])
+    res = predict(graph)
+    print graph[-3].value
+    print res
+
 
 if __name__ == '__main__':
     main()

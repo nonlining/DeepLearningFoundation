@@ -366,7 +366,10 @@ def forward_and_backward(graph):
         n.backward()
 
 def predict(graph):
-    forward(graph)
+
+    for n in graph[:-1]:
+        n.forward()
+    return graph[-2].value
 
 def forward(graph):
     for n in graph:
