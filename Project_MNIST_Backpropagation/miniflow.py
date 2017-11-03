@@ -247,9 +247,9 @@ class MSE(Node):
 
 class dropout(Node):
 
-    def __init__(self, x):
-        Node.__init__(self, [x], ratio)
-        self.ratio = ratio
+    def __init__(self, x, ratio):
+        Node.__init__(self, [x])
+        self.dropout_ratio = ratio
         self.mask = None
 
     def forward(self, train_flg=True):
@@ -261,7 +261,10 @@ class dropout(Node):
             self.value = x * (1.0 - self.dropout_ratio)
 
     def backward(self):
-        pass
+        self.gradients = {n: np.zeros_like(n.value) for n in self.inbound_nodes}
+        for n in self.outbound_nodes:
+            grad_cost = n.gradients[self]
+            self.gradients[self.inbound_nodes[0]] = grad_cost*self.mask
 
 class pooling(Node):
     def __init__(self, x, kernel_size, strides):
