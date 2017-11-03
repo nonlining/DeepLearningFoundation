@@ -43,7 +43,6 @@ class Linear(Node):
         self.orishape = X.shape
 
         X_ = X.reshape(self.inbound_nodes[0].value.shape[0], -1)
-
         self.value = np.dot(X_, W) + b
 
 
