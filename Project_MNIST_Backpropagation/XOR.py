@@ -10,6 +10,8 @@
 #-------------------------------------------------------------------------------
 import numpy as np
 from miniflow import *
+import time
+
 
 def main():
     X_data = [[0.,0.], [1.,0.] ,[0.,1.] ,[1.,1.]]
@@ -71,4 +73,7 @@ def main():
 
 
 if __name__ == '__main__':
+    tStart = time.time()
     main()
+    tEnd = time.time()
+    print tEnd - tStart
