@@ -266,16 +266,42 @@ class dropout(Node):
             grad_cost = n.gradients[self]
             self.gradients[self.inbound_nodes[0]] = grad_cost*self.mask
 
-class pooling(Node):
-    def __init__(self, x, pooling_size, strides, pad):
+class Pooling(Node):
+    def __init__(self, x, input_shape, pooling_size, strides, pad):
         Node.__init__(self, [x])
         self.pooling_size = pooling_size
-        self.inpit_size = x.shape
-        self.strides = strides
+        self.input_shape = input_shape
+        self.stride = strides
         self.pad = pad
+        self.value = None
+        self.n = None
 
     def forward(self):
-        pass
+        X = self.inbound_nodes[0].value
+        X = X.reshape(X.shape[0], self.input_shape[0], self.input_shape[1])
+        N, H, W = X.shape
+        self.n = N
+
+        out_height = (self.input_shape[0] - self.pooling_size[0])/self.stride[0] + 1
+        out_width  = (self.input_shape[1] - self.pooling_size[1])/self.stride[1] + 1
+
+        input = np.pad(X, [(0,0), (0, 0), (0, 0)], 'constant')
+
+        col = np.zeros((N, self.pooling_size[0], self.pooling_size[1], out_height, out_width))
+        print self.pooling_size
+
+        c = np.zeros((self.pooling_size[0] , out_height*out_width))
+
+        for y in range(self.pooling_size[0]):
+            y_max = y + self.stride[0]*out_height
+            for x in range(self.pooling_size[1]):
+                x_max = x + self.stride[1]*out_width
+                col[:,y,x,:,:] = input[:,y:y_max:self.stride[0], x:x_max:self.stride[1]]
+
+        col = col.transpose(0, 3, 4, 1, 2).reshape(N*out_height*out_width, -1)
+        arg_max = np.argmax(col, axis=1)
+        self.value = np.max(col, axis=1)
+
 
     def backward(self):
         pass

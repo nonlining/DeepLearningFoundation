@@ -24,6 +24,7 @@ def main():
 
     X_ = [float(i+1) for i in range(64)]
     X_ = np.array(X_).reshape(-1,64)
+    print X_
 
     for i in range(3):
         X_ = np.vstack((X_,X_))
@@ -42,9 +43,9 @@ def main():
     y = Input()
 
     W1, b1 = Input(), Input()
-    conv1 = Conv(X ,W1, b1, (8,8) , kernel_size, (1,1))
-    activation_1 = Relu(conv1)
-    #cost = MSE(y, activation_1)
+    pool1 = Pooling(X , (8,8) , kernel_size, (1,1), 0)
+    #activation_1 = Relu(pool1)
+
 
     feed_dict = {
         X: X_,
@@ -57,9 +58,8 @@ def main():
 
     trainables = [W1, b1]
 
-    forward_and_backward(graph)
+    forward(graph)
 
-    print graph[-1].value.shape
 
 
 
