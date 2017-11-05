@@ -267,8 +267,12 @@ class dropout(Node):
             self.gradients[self.inbound_nodes[0]] = grad_cost*self.mask
 
 class pooling(Node):
-    def __init__(self, x, kernel_size, strides):
+    def __init__(self, x, pooling_size, strides, pad):
         Node.__init__(self, [x])
+        self.pooling_size = pooling_size
+        self.inpit_size = x.shape
+        self.strides = strides
+        self.pad = pad
 
     def forward(self):
         pass
