@@ -135,6 +135,7 @@ class Conv(Node):
             for x in range(filter_w):
                 x_max = x + stride[1]*out_wide
                 t[:, y:y_max:stride[0], x:x_max:stride[1]] += col[:, y, x, :, :]
+
         t = t.reshape(N, shape[0]*shape[1])
 
         return t
@@ -275,6 +276,7 @@ class Pooling(Node):
         self.pad = pad
         self.value = None
         self.n = None
+        self.max_index = None
 
     def forward(self):
         X = self.inbound_nodes[0].value
@@ -299,12 +301,12 @@ class Pooling(Node):
                 col[:,y,x,:,:] = input[:,y:y_max:self.stride[0], x:x_max:self.stride[1]]
 
         col = col.transpose(0, 3, 4, 1, 2).reshape(N*out_height*out_width, -1)
-        arg_max = np.argmax(col, axis=1)
+        self.max_index = np.argmax(col, axis=1)
         self.value = np.max(col, axis=1)
 
 
     def backward(self):
-        pass
+        self.gradients = {n: np.zeros_like(n.value) for n in self.inbound_nodes}
 
 class soft_max(Node):
 
