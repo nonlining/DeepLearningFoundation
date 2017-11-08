@@ -24,41 +24,40 @@ def main():
 
     X_ = [float(i+1) for i in range(64)]
     X_ = np.array(X_).reshape(-1,64)
-    print X_
+    print X_.reshape(8,8)
 
     for i in range(3):
         X_ = np.vstack((X_,X_))
 
-
-
     W_layer1 = W_layer0
+
     for i in range(9):
         W_layer1 = np.vstack((W_layer1,W_layer0))
 
     print X_.shape
-    print W_layer1.shape
-    print b_layer1.shape
 
     X = Input()
-    y = Input()
+    #y = Input()
 
     W1, b1 = Input(), Input()
+
     pool1 = Pooling(X , (8,8) , kernel_size, (1,1), 0)
-    #activation_1 = Relu(pool1)
+    activation_1 = Sigmoid(pool1)
 
 
     feed_dict = {
         X: X_,
         #y: y_,
-        W1: W_layer1,
-        b1: b_layer1,
+        #W1: W_layer1,
+        #b1: b_layer1,
     }
 
     graph = topological_sort(feed_dict)
 
     trainables = [W1, b1]
 
-    forward(graph)
+    forward_and_backward(graph)
+
 
 
 

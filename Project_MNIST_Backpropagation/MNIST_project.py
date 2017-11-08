@@ -26,6 +26,7 @@ def main():
     X_ = normalized(data['data'], max_value, min_value)
 
     y_ = data['target']
+
     n_values = np.max(y_) + 1
     y_ = np.eye(n_values, dtype=int)[y_]
 

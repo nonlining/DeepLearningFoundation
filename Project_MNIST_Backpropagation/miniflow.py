@@ -169,7 +169,7 @@ class Conv(Node):
 
 
     def backward(self):
-        self.gradients = {n: np.zeros_like(n.value) for n in self.inbound_nodes}
+        self.gradients = {n: np.zeros_like(n.value, dtype = np.float64) for n in self.inbound_nodes}
         for n in self.outbound_nodes:
             filterNumber, filterSize = self.inbound_nodes[1].value.shape
             grad_cost = n.gradients[self]
@@ -290,7 +290,6 @@ class Pooling(Node):
         input = np.pad(X, [(0,0), (0, 0), (0, 0)], 'constant')
 
         col = np.zeros((N, self.pooling_size[0], self.pooling_size[1], out_height, out_width))
-        print self.pooling_size
 
         c = np.zeros((self.pooling_size[0] , out_height*out_width))
 
@@ -303,10 +302,17 @@ class Pooling(Node):
         col = col.transpose(0, 3, 4, 1, 2).reshape(N*out_height*out_width, -1)
         self.max_index = np.argmax(col, axis=1)
         self.value = np.max(col, axis=1)
+        print self.value
 
 
     def backward(self):
-        self.gradients = {n: np.zeros_like(n.value) for n in self.inbound_nodes}
+        self.gradients = {n: np.zeros_like(n.value, dtype = np.float64) for n in self.inbound_nodes}
+        for n in self.outbound_nodes:
+            grad_cost = n.gradients[self]
+            #grad_cost = grad_cost.transpose(0, 2, 3, 1)
+            print grad_cost.shape
+
+
 
 class soft_max(Node):
 
