@@ -24,6 +24,7 @@ def main():
     min_value = np.amin(data['data'])
 
     X_ = normalized(data['data'], max_value, min_value)
+    X_ = X_.reshape(X_.shape[0], 8, 8)
 
     y_ = data['target']
 
@@ -35,7 +36,7 @@ def main():
     kernel_size = (3,3)
 
     # init layers
-    W_layer1 = np.random.normal(0, 0.1, (fitter_numbers, kernel_size[0]*kernel_size[1]))
+    W_layer1 = np.random.normal(0, 0.1, (fitter_numbers, kernel_size[0], kernel_size[1]))
     b_layer1 = np.zeros(fitter_numbers, )
     W_layer2 = np.random.normal(0, 0.1, (36*fitter_numbers, 10))
     b_layer2 = np.zeros(10)
@@ -50,7 +51,9 @@ def main():
 
     activation_1 = Relu(conv_layer1)
 
-    linear = Linear(activation_1, W2, b2)
+    dropout1 = dropout(activation_1, 0.5)
+
+    linear = Linear(dropout1, W2, b2)
 
     output = soft_max(linear, y)
 
