@@ -45,21 +45,18 @@ class Linear(Node):
         X_ = X.reshape(self.inbound_nodes[0].value.shape[0], -1)
         self.value = np.dot(X_, W) + b
 
-
     def backward(self):
         self.gradients = {n: np.zeros_like(n.value) for n in self.inbound_nodes}
         for n in self.outbound_nodes:
             grad_cost = n.gradients[self]
-            #self.gradients[self.inbound_nodes[0]] += np.dot(grad_cost, self.inbound_nodes[1].value.T)
-
 
             self.gradients[self.inbound_nodes[0]] += np.dot(grad_cost, self.inbound_nodes[1].value.T).reshape(*self.orishape)
             if len(self.inbound_nodes[0].value.shape) > 2:
-                self.gradients[self.inbound_nodes[1]] += np.dot(self.inbound_nodes[0].value.T.transpose(1,0,2), grad_cost).reshape(-1, self.inbound_nodes[1].value.shape[-1])
+                temp = self.inbound_nodes[0].value.reshape(self.inbound_nodes[0].value.shape[0], self.inbound_nodes[0].value.shape[1], -1)
+                #self.gradients[self.inbound_nodes[1]] += np.dot(self.inbound_nodes[0].value.T.transpose(1,0,2), grad_cost).reshape(-1, self.inbound_nodes[1].value.shape[-1])
+                self.gradients[self.inbound_nodes[1]] += np.dot(temp.T.transpose(1,0,2), grad_cost).reshape(-1, self.inbound_nodes[1].value.shape[-1])
             else:
                 self.gradients[self.inbound_nodes[1]] += np.dot(self.inbound_nodes[0].value.T, grad_cost).reshape(-1, self.inbound_nodes[1].value.shape[-1])
-
-
             self.gradients[self.inbound_nodes[2]] += np.sum(grad_cost, axis=0, keepdims=False)
 
 
@@ -67,8 +64,8 @@ class Linear(Node):
 class Conv(Node):
     def __init__(self, X, W, b, input_shape, kernel_size, strides):
         Node.__init__(self, [X, W, b])
-        self.input_shape = input_shape
-        self.kernel_size = kernel_size
+        self.input_shape = None
+        self.kernel_size = None
         self.strides = strides
 
     def conv(self, X, shape, kernels, kernel_size, strides, b):
@@ -112,12 +109,14 @@ class Conv(Node):
 
 
         col = col.transpose(0, 3, 4, 1, 2).reshape(N*out_height*out_width, -1)
+        kernel_f = kernels.reshape(kernels.shape[0], -1)
 
-        res = np.dot(col, kernels.T) + b
+        res = np.dot(col, kernel_f.T) + b
 
         res = res.reshape(N, out_height*out_width, -1).transpose(0, 2, 1)
         #res = res.reshape(N, out_height, out_width, -1).transpose(0, 3, 1, 2)
         #res = res.reshape(res.shape[0], res.shape[1], out_width*out_height)
+        res = res.reshape(N, res.shape[1], out_height, out_width)
 
         return res, col
     def grad2input(self, X, N, shape, kernel_size, stride):
@@ -135,7 +134,6 @@ class Conv(Node):
             for x in range(filter_w):
                 x_max = x + stride[1]*out_wide
                 t[:, y:y_max:stride[0], x:x_max:stride[1]] += col[:, y, x, :, :]
-
         t = t.reshape(N, shape[0]*shape[1])
 
         return t
@@ -161,9 +159,11 @@ class Conv(Node):
         W = self.inbound_nodes[1].value
         b = self.inbound_nodes[2].value
 
-        X = X.reshape(X.shape[0], self.input_shape[0], self.input_shape[1])
+        #X = X.reshape(X.shape[0], self.input_shape[0], self.input_shape[1])
 
-        self.n = X.shape[0]
+        self.N = X.shape[0]
+        self.kernel_size = (W.shape[1], W.shape[2])
+        self.input_shape = (X.shape[1], X.shape[2])
 
         self.value ,self.col = self.conv2(X, self.input_shape, W, self.kernel_size, self.strides, b)
 
@@ -171,16 +171,22 @@ class Conv(Node):
     def backward(self):
         self.gradients = {n: np.zeros_like(n.value, dtype = np.float64) for n in self.inbound_nodes}
         for n in self.outbound_nodes:
-            filterNumber, filterSize = self.inbound_nodes[1].value.shape
+            W_f = self.inbound_nodes[1].value.reshape(self.inbound_nodes[1].value.shape[0], -1)
+
+            filterNumber, filterSize = W_f.shape
             grad_cost = n.gradients[self]
+
+            grad_cost = grad_cost.reshape(grad_cost.shape[0], grad_cost.shape[1], -1)
+
             grad_out = grad_cost.transpose(0,2,1).reshape(-1, filterNumber)
 
-            col = np.dot(grad_out, self.inbound_nodes[1].value)
+            col = np.dot(grad_out, W_f)
 
-            t = self.grad2input(col, self.n, self.input_shape, self.kernel_size, self.strides)
+            t = self.grad2input(col, self.N, self.input_shape, self.kernel_size, self.strides)
 
-            self.gradients[self.inbound_nodes[0]] += t
-            self.gradients[self.inbound_nodes[1]] += np.dot(grad_out.T, self.col)
+
+            self.gradients[self.inbound_nodes[0]] += t.reshape(self.N , *self.input_shape)
+            self.gradients[self.inbound_nodes[1]] += np.dot(grad_out.T, self.col).reshape(-1, *self.kernel_size)
             self.gradients[self.inbound_nodes[2]] += np.sum(np.sum(grad_cost, axis=2, keepdims=False), axis = 0,keepdims=False)
 
 
@@ -224,7 +230,6 @@ class Relu(Node):
             grad_cost = n.gradients[self]
             grad_cost[self.mask] = 0
             d = grad_cost
-
             self.gradients[self.inbound_nodes[0]] += d
 
 
@@ -240,6 +245,7 @@ class MSE(Node):
 
         self.m = self.inbound_nodes[0].value.shape[0]
         self.diff = y - a
+
         self.value = np.mean(self.diff**2)
 
     def backward(self):
@@ -275,14 +281,14 @@ class Pooling(Node):
         self.stride = strides
         self.pad = pad
         self.value = None
-        self.n = None
+        self.N = None
         self.max_index = None
 
     def forward(self):
         X = self.inbound_nodes[0].value
         X = X.reshape(X.shape[0], self.input_shape[0], self.input_shape[1])
         N, H, W = X.shape
-        self.n = N
+        self.N = N
 
         out_height = (self.input_shape[0] - self.pooling_size[0])/self.stride[0] + 1
         out_width  = (self.input_shape[1] - self.pooling_size[1])/self.stride[1] + 1
@@ -300,6 +306,7 @@ class Pooling(Node):
                 col[:,y,x,:,:] = input[:,y:y_max:self.stride[0], x:x_max:self.stride[1]]
 
         col = col.transpose(0, 3, 4, 1, 2).reshape(N*out_height*out_width, -1)
+
         self.max_index = np.argmax(col, axis=1)
         self.value = np.max(col, axis=1)
         print self.value
