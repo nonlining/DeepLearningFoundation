@@ -35,22 +35,23 @@ class Linear(Node):
 
     def __init__(self, X, W, b):
         Node.__init__(self, [X, W, b])
+        self.ori_shape = None
 
     def forward(self):
         X = self.inbound_nodes[0].value
         W = self.inbound_nodes[1].value
         b = self.inbound_nodes[2].value
-        self.orishape = X.shape
+        self.ori_shape = X.shape
 
-        X_ = X.reshape(self.inbound_nodes[0].value.shape[0], -1)
-        self.value = np.dot(X_, W) + b
+        X = X.reshape(self.inbound_nodes[0].value.shape[0], -1)
+        self.value = np.dot(X, W) + b
 
     def backward(self):
-        self.gradients = {n: np.zeros_like(n.value) for n in self.inbound_nodes}
+        self.gradients = {n: np.zeros_like(n.value, dtype = np.float64) for n in self.inbound_nodes}
         for n in self.outbound_nodes:
             grad_cost = n.gradients[self]
 
-            self.gradients[self.inbound_nodes[0]] += np.dot(grad_cost, self.inbound_nodes[1].value.T).reshape(*self.orishape)
+            self.gradients[self.inbound_nodes[0]] += np.dot(grad_cost, self.inbound_nodes[1].value.T).reshape(*self.ori_shape)
             if len(self.inbound_nodes[0].value.shape) > 2:
                 temp = self.inbound_nodes[0].value.reshape(self.inbound_nodes[0].value.shape[0], self.inbound_nodes[0].value.shape[1], -1)
                 #self.gradients[self.inbound_nodes[1]] += np.dot(self.inbound_nodes[0].value.T.transpose(1,0,2), grad_cost).reshape(-1, self.inbound_nodes[1].value.shape[-1])
@@ -62,11 +63,15 @@ class Linear(Node):
 
 
 class Conv(Node):
-    def __init__(self, X, W, b, input_shape, kernel_size, strides):
+    def __init__(self, X, W, b, strides, padding):
         Node.__init__(self, [X, W, b])
+        self.strides = strides
+        self.padding = padding
         self.input_shape = None
         self.kernel_size = None
-        self.strides = strides
+        self.Channel = None
+        self.ori_shape = None
+
 
     def conv(self, X, shape, kernels, kernel_size, strides, b):
         out_height = (shape[0] - kernel_size[0])/strides[0] + 1
@@ -90,51 +95,53 @@ class Conv(Node):
             l += 1
         return c
 
-    def conv2(self, X, shape, kernels, kernel_size, stride, b):
-        N, H, W = X.shape
+    def _conv2(self, X, input_shape, kernels, kernel_size, stride, padding, b):
 
-        out_height = (shape[0] - kernel_size[0])/stride[0] + 1
-        out_width  = (shape[1] - kernel_size[1])/stride[1] + 1
+        Num, Ch, Height, Width = X.shape
 
-        img = np.pad(X, [(0,0), (0, 0), (0, 0)], 'constant')
+        out_height = (Height + 2*padding - kernel_size[0])/stride[0] + 1
+        out_width  = (Width + 2*padding - kernel_size[1])/stride[1] + 1
 
-        col = np.zeros((N, kernel_size[0], kernel_size[1], out_height, out_width))
+        input = np.pad(X, [(0,0), (0,0), (padding, padding), (padding, padding)], 'constant')
 
-        c = np.zeros((kernels.shape[0] , out_height*out_width))
+        unroll_x = np.zeros((Num, Ch, kernel_size[0], kernel_size[1], out_height, out_width))
+
         for y in range(kernel_size[0]):
             y_max = y + stride[0]*out_height
             for x in range(kernel_size[1]):
                 x_max = x + stride[1]*out_width
-                col[:,y,x,:,:] = img[:,y:y_max:stride[0], x:x_max:stride[1]]
+                unroll_x[:, :, y, x, :, :] = input[:,:,y:y_max:stride[0], x:x_max:stride[1]]
 
 
-        col = col.transpose(0, 3, 4, 1, 2).reshape(N*out_height*out_width, -1)
-        kernel_f = kernels.reshape(kernels.shape[0], -1)
+        unroll_x = unroll_x.transpose(0, 4, 5, 1, 2, 3).reshape(Num*out_height*out_width, -1)
 
-        res = np.dot(col, kernel_f.T) + b
+        kernel_trans = kernels.reshape(kernels.shape[0], -1)
 
-        res = res.reshape(N, out_height*out_width, -1).transpose(0, 2, 1)
-        #res = res.reshape(N, out_height, out_width, -1).transpose(0, 3, 1, 2)
-        #res = res.reshape(res.shape[0], res.shape[1], out_width*out_height)
-        res = res.reshape(N, res.shape[1], out_height, out_width)
+        res = np.dot(unroll_x, kernel_trans.T) + b
+        res = res.reshape(Num, out_height*out_width, -1).transpose(0, 2, 1)
+        res = res.reshape(Num, res.shape[1], out_height, out_width)
 
-        return res, col
-    def grad2input(self, X, N, shape, kernel_size, stride):
-        H, W = shape
-        filter_h, filter_w = kernel_size
 
-        out_hight = (H - filter_h)//stride[0] + 1
-        out_wide =  (H - filter_h)//stride[1] + 1
+        return res, unroll_x
 
-        col = X.reshape(N, out_hight, out_wide, filter_h, filter_w).transpose(0, 3, 4, 1, 2)
-        t = np.zeros((N, H + stride[0] - 1, W + stride[1] - 1))
+    def _conv2input(self, X, input_shape, kernel_size, stride, padding):
+        Num, Ch, Height, Width = input_shape
 
-        for y in range(filter_h):
-            y_max = y + stride[0]*out_hight
-            for x in range(filter_w):
-                x_max = x + stride[1]*out_wide
-                t[:, y:y_max:stride[0], x:x_max:stride[1]] += col[:, y, x, :, :]
-        t = t.reshape(N, shape[0]*shape[1])
+        out_height = (Height + 2*padding - kernel_size[0])/stride[0] + 1
+        out_width =  (Width + 2*padding - kernel_size[1])/stride[1] + 1
+
+        unroll_x = X.reshape(Num, out_height, out_width, Ch, kernel_size[0], kernel_size[1]).transpose(0, 3, 4, 5, 1, 2)
+
+        t = np.zeros((Num, Ch, Height + 2*padding - stride[0] + 1, Width + 2*padding + stride[1] - 1))
+
+
+        for y in range(kernel_size[0]):
+            y_max = y + stride[0]*out_height
+            for x in range(kernel_size[1]):
+                x_max = x + stride[1]*out_width
+                t[:, :, y:y_max:stride[0], x:x_max:stride[1]] += unroll_x[:, :, y, x, :, :]
+
+        t = t.reshape(Num, Ch, Height*Width)
 
         return t
 
@@ -159,34 +166,34 @@ class Conv(Node):
         W = self.inbound_nodes[1].value
         b = self.inbound_nodes[2].value
 
-        #X = X.reshape(X.shape[0], self.input_shape[0], self.input_shape[1])
+        self.ori_shape = X.shape
+        self.Num = X.shape[0]
+        self.Channel = X.shape[1]
+        self.kernel_size = (W.shape[2], W.shape[3])
+        self.input_shape = (X.shape[2], X.shape[3])
 
-        self.N = X.shape[0]
-        self.kernel_size = (W.shape[1], W.shape[2])
-        self.input_shape = (X.shape[1], X.shape[2])
-
-        self.value ,self.col = self.conv2(X, self.input_shape, W, self.kernel_size, self.strides, b)
-
+        self.value ,self.col = self._conv2(X, self.input_shape, W, self.kernel_size, self.strides, self.padding ,b)
 
     def backward(self):
         self.gradients = {n: np.zeros_like(n.value, dtype = np.float64) for n in self.inbound_nodes}
         for n in self.outbound_nodes:
-            W_f = self.inbound_nodes[1].value.reshape(self.inbound_nodes[1].value.shape[0], -1)
 
-            filterNumber, filterSize = W_f.shape
+            W_flatten = self.inbound_nodes[1].value.reshape(self.inbound_nodes[1].value.shape[0], -1)
+
+            fitter_numbers, filter_Size = W_flatten.shape
+
             grad_cost = n.gradients[self]
 
             grad_cost = grad_cost.reshape(grad_cost.shape[0], grad_cost.shape[1], -1)
 
-            grad_out = grad_cost.transpose(0,2,1).reshape(-1, filterNumber)
+            grad_out = grad_cost.transpose(0,2,1).reshape(-1, fitter_numbers)
 
-            col = np.dot(grad_out, W_f)
+            col = np.dot(grad_out, W_flatten)
 
-            t = self.grad2input(col, self.N, self.input_shape, self.kernel_size, self.strides)
+            out = self._conv2input(col, self.ori_shape, self.kernel_size, self.strides, self.padding)
 
-
-            self.gradients[self.inbound_nodes[0]] += t.reshape(self.N , *self.input_shape)
-            self.gradients[self.inbound_nodes[1]] += np.dot(grad_out.T, self.col).reshape(-1, *self.kernel_size)
+            self.gradients[self.inbound_nodes[0]] += out.reshape(self.Num , self.Channel,*self.input_shape)
+            self.gradients[self.inbound_nodes[1]] += np.dot(grad_out.T, self.col).reshape(-1, self.Channel,*self.kernel_size)
             self.gradients[self.inbound_nodes[2]] += np.sum(np.sum(grad_cost, axis=2, keepdims=False), axis = 0,keepdims=False)
 
 
@@ -252,7 +259,7 @@ class MSE(Node):
         self.gradients[self.inbound_nodes[0]] = (2 / self.m) * self.diff
         self.gradients[self.inbound_nodes[1]] = (-2 / self.m) * self.diff
 
-class dropout(Node):
+class Dropout(Node):
 
     def __init__(self, x, ratio):
         Node.__init__(self, [x])
@@ -274,54 +281,83 @@ class dropout(Node):
             self.gradients[self.inbound_nodes[0]] = grad_cost*self.mask
 
 class Pooling(Node):
-    def __init__(self, x, input_shape, pooling_size, strides, pad):
+    def __init__(self, x, pooling_size, strides, padding):
         Node.__init__(self, [x])
         self.pooling_size = pooling_size
-        self.input_shape = input_shape
         self.stride = strides
-        self.pad = pad
+        self.padding = padding
         self.value = None
-        self.N = None
+        self.Num = None
         self.max_index = None
+        self.ori_shape = None
 
     def forward(self):
         X = self.inbound_nodes[0].value
-        X = X.reshape(X.shape[0], self.input_shape[0], self.input_shape[1])
-        N, H, W = X.shape
-        self.N = N
 
-        out_height = (self.input_shape[0] - self.pooling_size[0])/self.stride[0] + 1
-        out_width  = (self.input_shape[1] - self.pooling_size[1])/self.stride[1] + 1
+        Num, Ch, Height, Width = X.shape
+        self.ori_shape = X.shape
+        self.Num = Num
 
-        input = np.pad(X, [(0,0), (0, 0), (0, 0)], 'constant')
+        out_height = (Height + 2*self.padding - self.pooling_size[0])/self.stride[0] + 1
+        out_width  = (Width + 2*self.padding - self.pooling_size[1])/self.stride[1] + 1
 
-        col = np.zeros((N, self.pooling_size[0], self.pooling_size[1], out_height, out_width))
+        input = np.pad(X, [(0,0), (0,0), (self.padding, self.padding), (self.padding, self.padding)], 'constant')
 
-        c = np.zeros((self.pooling_size[0] , out_height*out_width))
+        unroll_x = np.zeros((Num, Ch, self.pooling_size[0], self.pooling_size[1], out_height, out_width))
 
         for y in range(self.pooling_size[0]):
             y_max = y + self.stride[0]*out_height
             for x in range(self.pooling_size[1]):
                 x_max = x + self.stride[1]*out_width
-                col[:,y,x,:,:] = input[:,y:y_max:self.stride[0], x:x_max:self.stride[1]]
+                unroll_x[:, :, y, x, :, :] = input[:, :, y:y_max:self.stride[0], x:x_max:self.stride[1]]
 
-        col = col.transpose(0, 3, 4, 1, 2).reshape(N*out_height*out_width, -1)
+        unroll_x = unroll_x.transpose(0, 4, 5, 1, 2, 3)
+        unroll_x = unroll_x.reshape(Num*out_height*out_width, -1)
+        unroll_x = unroll_x.reshape(-1, self.pooling_size[0]*self.pooling_size[1])
 
-        self.max_index = np.argmax(col, axis=1)
-        self.value = np.max(col, axis=1)
-        print self.value
+        self.max_index = np.argmax(unroll_x, axis=1)
+        self.value = np.max(unroll_x, axis=1)
+        self.value = self.value.reshape(Num, out_height, out_width, Ch).transpose(0, 3, 1, 2)
+
+
 
 
     def backward(self):
         self.gradients = {n: np.zeros_like(n.value, dtype = np.float64) for n in self.inbound_nodes}
         for n in self.outbound_nodes:
             grad_cost = n.gradients[self]
-            #grad_cost = grad_cost.transpose(0, 2, 3, 1)
-            print grad_cost.shape
+            grad_cost = grad_cost.transpose(0, 2, 3, 1)
+            out = np.zeros((grad_cost.size, self.pooling_size[0]*self.pooling_size[1]))
+
+            out[np.arange(self.max_index.size), self.max_index.flatten()] = grad_cost.flatten()
+
+            out = out.reshape(grad_cost.shape + (self.pooling_size[0]*self.pooling_size[1],))
+
+            out = out.reshape(grad_cost.shape[0]*grad_cost.shape[1]*grad_cost.shape[2], -1)
+
+            Num, Ch, Height, Width = self.ori_shape
+
+            out_height = (Height + 2*self.padding - self.pooling_size[0])/self.stride[0] + 1
+            out_width = (Width + 2*self.padding - self.pooling_size[1])/self.stride[1] + 1
+
+            out = out.reshape(Num, out_height, out_width, Ch, self.pooling_size[0], self.pooling_size[1]).transpose(0, 3, 4, 5, 1, 2)
+
+            unroll_x = np.zeros((Num, Ch, Height + 2*self.padding + self.stride[0] - 1, Width + 2*self.padding + self.stride[1] - 1))
+
+            for y in range(self.pooling_size[0]):
+                y_max = y + self.stride[0]*out_height
+                for x in range(self.pooling_size[1]):
+                    x_max = x + self.stride[1]*out_width
+                    unroll_x[:, :, y:y_max:self.stride[0], x:x_max:self.stride[1]] += out[:, :, y, x, :, :]
+            unroll_x = unroll_x[:, :, self.padding:Height + self.padding, self.padding:Width + self.padding]
+
+            self.gradients[self.inbound_nodes[0]] += unroll_x
 
 
 
-class soft_max(Node):
+
+
+class Softmax(Node):
 
     def __init__(self, y, a):
         Node.__init__(self, [y, a])

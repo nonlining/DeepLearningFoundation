@@ -24,21 +24,23 @@ def main():
     min_value = np.amin(data['data'])
 
     X_ = normalized(data['data'], max_value, min_value)
-    X_ = X_.reshape(X_.shape[0], 8, 8)
+    X_ = X_.reshape(X_.shape[0], 1, 8, 8)
+    print "Input size", X_.shape
 
     y_ = data['target']
-
     n_values = np.max(y_) + 1
     y_ = np.eye(n_values, dtype=int)[y_]
 
     # parameters
-    fitter_numbers = 10
+    fitter_numbers = 2
     kernel_size = (3,3)
+    pooling_size = (2,2)
 
     # init layers
-    W_layer1 = np.random.normal(0, 0.1, (fitter_numbers, kernel_size[0], kernel_size[1]))
+    W_layer1 = np.random.normal(0, 0.1, (fitter_numbers, kernel_size[0]* kernel_size[1]))
+    W_layer1 = W_layer1.reshape(fitter_numbers, 1, kernel_size[0], kernel_size[1])
     b_layer1 = np.zeros(fitter_numbers, )
-    W_layer2 = np.random.normal(0, 0.1, (36*fitter_numbers, 10))
+    W_layer2 = np.random.normal(0, 0.1, (25*fitter_numbers, 10))
     b_layer2 = np.zeros(10)
 
     # network
@@ -47,15 +49,17 @@ def main():
     W1, b1 = Input(), Input()
     W2, b2 = Input(), Input()
 
-    conv_layer1 = Conv(X, W1, b1, (8,8), kernel_size, (1,1))
+    conv_layer1 = Conv(X, W1, b1, (1,1), 0)
 
-    activation_1 = Relu(conv_layer1)
+    pooling1 = Pooling(conv_layer1, pooling_size, (1,1), 0)
 
-    dropout1 = dropout(activation_1, 0.5)
+    activation_1 = Relu(pooling1)
+
+    dropout1 = Dropout(activation_1, 0.5)
 
     linear = Linear(dropout1, W2, b2)
 
-    output = soft_max(linear, y)
+    output = Softmax(linear, y)
 
     feed_dict = {
         X: X_,
@@ -69,16 +73,19 @@ def main():
     graph = topological_sort(feed_dict)
 
     trainables = [W1, b1, W2, b2]
-    epochs = 100
-    loss_list = []
+    epochs = 10
+    learning_rate=1e-2
 
     for i in range(epochs):
 
         forward_and_backward(graph)
-        sgd_update(trainables)
+        #forward(graph)
+        for t in trainables:
+            partial = t.gradients[t]
+            t.value -= learning_rate * partial
+
         loss = graph[-1].diff
-        print("Epoch: {}, Loss: {:.3f}".format(i+1, loss))
-        loss_list.append(loss)
+        print loss
     print W1.value
 
     #plt.figure()
