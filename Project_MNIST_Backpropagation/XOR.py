@@ -14,11 +14,11 @@ import time
 
 
 def main():
-    X_data = [[0.,0.], [1.,0.] ,[0.,1.] ,[1.,1.]]
+    X_data = [[0,0], [1,0] ,[0,1] ,[1,1]]
 
     X_data = np.array(X_data)
 
-    y_label = [[0., 1., 1., 0.]]
+    y_label = [[0, 1, 1, 0]]
     y_label = np.array(y_label)
 
     W_layer1 = np.random.randn(2,2)
@@ -52,7 +52,7 @@ def main():
 
     trainables = [W1, b1, W2, b2]
 
-    epochs = 500000
+    epochs = 50000
     learning_rate=0.1
     for i in range(epochs):
 
@@ -68,12 +68,13 @@ def main():
 
     X.value = np.array([[1,1], [1,0], [0,1],[0,0]])
     res = predict(graph)
-    print graph[-3].value
-    print res
+
+    for i in range(X.value.shape[0]):
+        print X.value[i], "result is ",
+        print '{:3.1f}'.format(res[i][0])
 
 
 if __name__ == '__main__':
-    tStart = time.time()
+
     main()
-    tEnd = time.time()
-    print tEnd - tStart
+
