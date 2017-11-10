@@ -41,7 +41,7 @@ def main():
 
     trainables = [W1, b1]
 
-    epochs = 500000
+    epochs = 50000
     learning_rate=0.1
     for i in range(epochs):
 
@@ -57,8 +57,11 @@ def main():
 
     X.value = np.array([[1,1], [1,0], [0,1],[0,0]])
     res = predict(graph)
-    print graph[-3].value
-    print res
+
+    for i in range(X.value.shape[0]):
+        print X.value[i], "result is ",
+        print '{:3.1f}'.format(res[i][0])
+
 
 if __name__ == '__main__':
     main()
