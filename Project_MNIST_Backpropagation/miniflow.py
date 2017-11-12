@@ -99,8 +99,8 @@ class Conv(Node):
 
         Num, Ch, Height, Width = X.shape
 
-        out_height = (Height + 2*padding - kernel_size[0])/stride[0] + 1
-        out_width  = (Width + 2*padding - kernel_size[1])/stride[1] + 1
+        out_height = (Height + 2*padding - kernel_size[0])//stride[0] + 1
+        out_width  = (Width + 2*padding - kernel_size[1])//stride[1] + 1
 
         input = np.pad(X, [(0,0), (0,0), (padding, padding), (padding, padding)], 'constant')
 
@@ -127,13 +127,12 @@ class Conv(Node):
     def _conv2input(self, X, input_shape, kernel_size, stride, padding):
         Num, Ch, Height, Width = input_shape
 
-        out_height = (Height + 2*padding - kernel_size[0])/stride[0] + 1
-        out_width =  (Width + 2*padding - kernel_size[1])/stride[1] + 1
+        out_height = (Height + 2*padding - kernel_size[0])//stride[0] + 1
+        out_width =  (Width + 2*padding - kernel_size[1])//stride[1] + 1
 
         unroll_x = X.reshape(Num, out_height, out_width, Ch, kernel_size[0], kernel_size[1]).transpose(0, 3, 4, 5, 1, 2)
 
-        t = np.zeros((Num, Ch, Height + 2*padding - stride[0] + 1, Width + 2*padding + stride[1] - 1))
-
+        t = np.zeros((Num, Ch, Height + 2*padding + stride[0] - 1, Width + 2*padding + stride[1] - 1))
 
         for y in range(kernel_size[0]):
             y_max = y + stride[0]*out_height
@@ -141,6 +140,7 @@ class Conv(Node):
                 x_max = x + stride[1]*out_width
                 t[:, :, y:y_max:stride[0], x:x_max:stride[1]] += unroll_x[:, :, y, x, :, :]
 
+        t = t[:, :, padding:Height + padding, padding:Width + padding]
         t = t.reshape(Num, Ch, Height*Width)
 
         return t
@@ -355,12 +355,10 @@ class Pooling(Node):
 
 
 
-
-
 class Softmax(Node):
 
-    def __init__(self, y, a):
-        Node.__init__(self, [y, a])
+    def __init__(self, y, t):
+        Node.__init__(self, [y, t])
 
     def _cross_entropy_error(self, y, t):
 
@@ -390,10 +388,11 @@ class Softmax(Node):
 
     def forward(self):
         input_value = self.inbound_nodes[0].value
-        y = self.inbound_nodes[1].value
+        target_value = self.inbound_nodes[1].value
         self.value = self._soft_max(input_value)
-
-        self.diff = self._cross_entropy_error(self.value, y)
+        #print self.value
+        self.loss = self._cross_entropy_error(self.value, target_value)
+        #print self.loss
 
     def backward(self):
         batch_size = self.inbound_nodes[1].value.shape[0]
@@ -466,5 +465,5 @@ def sgd_update(trainables, learning_rate=1e-2):
         partial = t.gradients[t]
         t.value -= learning_rate * partial
 
-def normalized(x, max_value, min_value):
-    return (x - min_value)/float(max_value - min_value)
+def normalized(x):
+    return x/255.
