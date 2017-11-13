@@ -59,8 +59,11 @@ def main():
     dataset['test_label'] = load_label(key_file['test_label'])
 
     X_ = normalized(dataset['train_img'])
+    X_test = normalized(dataset['test_img'])
 
     y_ = one_hot_encoding(dataset['train_label'])
+    #y_test = one_hot_encoding(dataset['test_label'])
+    y_test = dataset['test_label']
 
     # parameters
     fitter_numbers = 16
@@ -174,9 +177,10 @@ def main():
     graph = topological_sort(feed_dict)
 
     trainables = [W1, b1, W2, b2, W3, b3, W4, b4, W5, b5, W6, b6, W7, b7, W8, b8]
-    epochs = 10
+    epochs = 5
     learning_rate=1e-2
     train_size = X_.shape[0]
+    test_size = X_test.shape[0]
     batch_size = 100
 
     steps_per_epoch = int(train_size/batch_size)
@@ -185,23 +189,40 @@ def main():
 
     for i in range(epochs):
         loss = 0
-        for j in range(steps_per_epoch):
+        index = 0
+        while (index + 1)*100 <= train_size:
 
-            batch_mask = np.random.choice(train_size, batch_size)
-            X_batch = X_[batch_mask]
-            y_batch = y_[batch_mask]
+            #batch_mask = np.random.choice(train_size, batch_size)
+            X_batch = X_[index*100: (index+1)*100]
+            y_batch = y_[index*100: (index+1)*100]
 
             X.value = X_batch
             y.value = y_batch
 
             forward_and_backward(graph)
             sgd_update(trainables)
-            print j,'/',steps_per_epoch,':',graph[-1].loss
+            print index+1,'/',steps_per_epoch,':',graph[-1].loss
             loss += graph[-1].loss
+            index += 1
 
-        print("Epoch: {}, Loss: {:.3f}".format(i+1, loss/steps_per_epoch))
-
+        print("Epoch: {}, Loss: {:.3f}".format(i+1, loss/float(steps_per_epoch)))
         loss_list.append(loss/steps_per_epoch)
+
+        batch_mask = np.random.choice(test_size, 100)
+        X_batch_test = X_test[batch_mask]
+        y_batch_test = y_test[batch_mask]
+        X.value = X_batch_test
+        res = predict(graph)
+        curr_num = np.sum(y_batch_test == np.argmax(res, axis=1))
+        print "Epoch: {}, test acc: {:.3f}".format(i+1, curr_num/float(100))
+
+
+    X.value = X_test
+    res = predict(graph)
+
+    curr_num = np.sum(y_test == np.argmax(res, axis=1))
+    print "test acc for all test data : {:.3f} ".format(curr_num/float(test_size))
+    # test acc: 0.969 for 5 epochs
 
 
 

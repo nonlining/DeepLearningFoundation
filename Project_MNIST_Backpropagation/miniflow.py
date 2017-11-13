@@ -448,7 +448,10 @@ def forward_and_backward(graph):
 def predict(graph):
 
     for n in graph[:-1]:
-        n.forward()
+        if isinstance(n, Dropout):
+            n.forward(False)
+        else:
+            n.forward()
     return graph[-2].value
 
 def forward(graph):
