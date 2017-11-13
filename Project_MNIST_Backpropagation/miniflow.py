@@ -390,9 +390,7 @@ class Softmax(Node):
         input_value = self.inbound_nodes[0].value
         target_value = self.inbound_nodes[1].value
         self.value = self._soft_max(input_value)
-        #print self.value
         self.loss = self._cross_entropy_error(self.value, target_value)
-        #print self.loss
 
     def backward(self):
         batch_size = self.inbound_nodes[1].value.shape[0]

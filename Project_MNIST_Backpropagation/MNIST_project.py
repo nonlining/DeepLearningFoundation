@@ -12,7 +12,7 @@ import numpy as np
 from miniflow import *
 import gzip
 
-np.random.seed(1)
+
 
 key_file = {
     'train_img':'train-images-idx3-ubyte.gz',
@@ -50,6 +50,7 @@ def one_hot_encoding(y):
 
 
 def main():
+    np.random.seed(1)
     # load data
     dataset = {}
     dataset['train_img'] =  load_img(key_file['train_img'])
@@ -61,25 +62,39 @@ def main():
 
     y_ = one_hot_encoding(dataset['train_label'])
 
-
     # parameters
     fitter_numbers = 16
     kernel_size = (3,3)
-    pooling_size = (2,2)
 
     # init layers
 
-    W_layer1 = np.sqrt(2.0 / 3*3) * np.random.randn(fitter_numbers, 1, kernel_size[0], kernel_size[1])
+    W_layer1 = np.sqrt(2.0/(1*3*3)) * np.random.randn(fitter_numbers, 1, kernel_size[0], kernel_size[1])
     b_layer1 = np.zeros(fitter_numbers)
 
-    W_layer2 = np.sqrt(2.0 /16*3*3) * np.random.randn(fitter_numbers, 16, kernel_size[0], kernel_size[1])
+    W_layer2 = np.sqrt(2.0/(16*3*3)) * np.random.randn(fitter_numbers, 16, kernel_size[0], kernel_size[1])
     b_layer2 = np.zeros(fitter_numbers)
 
-    #W_layer3 = np.sqrt(2.0 /16*3*3) * np.random.randn(fitter_numbers, 16, kernel_size[0], kernel_size[1])
-    #b_layer3 = np.zeros(fitter_numbers)
+    fitter_numbers = 32
 
-    W_layer3 = np.sqrt(2.0 /16*3*3) * np.random.randn(12544, 10)
-    b_layer3 = np.zeros(10)
+    W_layer3 = np.sqrt(2.0/(16*3*3)) * np.random.randn(fitter_numbers, 16, kernel_size[0], kernel_size[1])
+    b_layer3 = np.zeros(fitter_numbers)
+
+    W_layer4 = np.sqrt(2.0/(32*3*3)) * np.random.randn(fitter_numbers, 32, kernel_size[0], kernel_size[1])
+    b_layer4 = np.zeros(fitter_numbers)
+
+    fitter_numbers = 64
+
+    W_layer5 = np.sqrt(2.0/(32*3*3)) * np.random.randn(fitter_numbers, 32, kernel_size[0], kernel_size[1])
+    b_layer5 = np.zeros(fitter_numbers)
+
+    W_layer6 = np.sqrt(2.0/(64*3*3)) * np.random.randn(fitter_numbers, 64, kernel_size[0], kernel_size[1])
+    b_layer6 = np.zeros(fitter_numbers)
+
+    W_layer7 = np.sqrt(2.0/(64*4*4)) * np.random.randn(64*4*4, 50)
+    b_layer7 = np.zeros(50)
+
+    W_layer8 = np.sqrt(2.0 / 50) * np.random.randn(50, 10)
+    b_layer8 = np.zeros(10)
 
 
     # network
@@ -87,10 +102,13 @@ def main():
     W1, b1 = Input(), Input()
     W2, b2 = Input(), Input()
     W3, b3 = Input(), Input()
+    W4, b4 = Input(), Input()
+    W5, b5 = Input(), Input()
+    W6, b6 = Input(), Input()
+    W7, b7 = Input(), Input()
+    W8, b8 = Input(), Input()
 
     conv_layer1 = Conv(X, W1, b1, (1,1), 1)
-
-    #pooling1 = Pooling(conv_layer1, pooling_size, (1,1), 0)
 
     activation_1 = Relu(conv_layer1)
 
@@ -98,25 +116,65 @@ def main():
 
     activation_2 = Relu(conv_layer2)
 
-    linear = Linear(activation_2, W3, b3)
+    pooling1 = Pooling(activation_2, (2,2), (2,2), 0)
 
-    output = Softmax(linear, y)
+    conv_layer3 = Conv(pooling1, W3, b3, (1,1), 1)
+
+    activation_3 = Relu(conv_layer3)
+
+    conv_layer4 = Conv(activation_3, W4, b4, (1,1), 2)
+
+    activation_4 = Relu(conv_layer4)
+
+    pooling2 = Pooling(activation_4, (2,2), (2,2), 0)
+
+    conv_layer5 = Conv(pooling2, W5, b5, (1,1), 1)
+
+    activation_5 = Relu(conv_layer5)
+
+    conv_layer6 = Conv(activation_5, W6, b6, (1,1), 1)
+
+    activation_6 = Relu(conv_layer6)
+
+    pooling3 = Pooling(activation_6, (2,2), (2,2), 0)
+
+    linear1 = Linear(pooling3, W7, b7)
+
+    activation_7 = Relu(linear1)
+
+    dropout1 = Dropout(activation_7, 0.5)
+
+    linear2 = Linear(dropout1, W8, b8)
+
+    dropout2 = Dropout(linear2, 0.5)
+
+    output = Softmax(dropout2, y)
 
     feed_dict = {
         X: X_,
         y: y_,
-        W1: W_layer1,
-        b1: b_layer1,
+        W1:W_layer1,
+        b1:b_layer1,
         W2:W_layer2,
         b2:b_layer2,
         W3:W_layer3,
-        b3:b_layer3
+        b3:b_layer3,
+        W4:W_layer4,
+        b4:b_layer4,
+        W5:W_layer5,
+        b5:b_layer5,
+        W6:W_layer6,
+        b6:b_layer6,
+        W7:W_layer7,
+        b7:b_layer7,
+        W8:W_layer8,
+        b8:b_layer8
     }
 
     graph = topological_sort(feed_dict)
 
-    trainables = [W1, b1, W2, b2, W3, b3]
-    epochs = 10
+    trainables = [W1, b1, W2, b2, W3, b3, W4, b4, W5, b5, W6, b6, W7, b7, W8, b8]
+    epochs = 1
     learning_rate=1e-2
     train_size = X_.shape[0]
     batch_size = 100
