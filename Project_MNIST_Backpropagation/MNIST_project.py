@@ -174,7 +174,7 @@ def main():
     graph = topological_sort(feed_dict)
 
     trainables = [W1, b1, W2, b2, W3, b3, W4, b4, W5, b5, W6, b6, W7, b7, W8, b8]
-    epochs = 1
+    epochs = 10
     learning_rate=1e-2
     train_size = X_.shape[0]
     batch_size = 100
@@ -194,10 +194,10 @@ def main():
             X.value = X_batch
             y.value = y_batch
 
-
             forward_and_backward(graph)
             sgd_update(trainables)
-            print(graph[-1].loss)
+            print j,'/',steps_per_epoch,':',graph[-1].loss
+            loss += graph[-1].loss
 
         print("Epoch: {}, Loss: {:.3f}".format(i+1, loss/steps_per_epoch))
 
