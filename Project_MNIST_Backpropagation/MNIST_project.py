@@ -201,7 +201,8 @@ def main():
 
             forward_and_backward(graph)
             sgd_update(trainables)
-            print index+1,'/',steps_per_epoch,':',graph[-1].loss
+            if (index + 1)%100 == 0:
+                print index+1,'/',steps_per_epoch,':',graph[-1].loss
             loss += graph[-1].loss
             index += 1
 
